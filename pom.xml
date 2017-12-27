@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>activiti2</groupId>
+    <artifactId>activiti</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+
+
+    <properties>
+
+        <springframework>4.0.9.RELEASE</springframework>
+
+        <hibernate>4.1.0.Final</hibernate>
+
+        <mysql.connector>5.1.27</mysql.connector>
+
+        <c3p0>0.9.1.2</c3p0>
+
+        <log4j>1.2.16</log4j>
+
+        <activiti>5.15.1</activiti>
+
+        <jstl>1.2</jstl>
+
+    </properties>
+
+
+
+
+
+    <dependencies>
+
+        <!-- Spring web mvc -->
+
+        <dependency>
+
+            <groupId>org.springframework</groupId>
+
+            <artifactId>spring-webmvc</artifactId>
+
+            <version>${springframework}</version>
+
+        </dependency>
+
+
+
+        <!-- Spring framework 4中的orm包已经单独拿出来了，所以要和hibernate集成，需要此包 -->
+
+        <dependency>
+
+            <groupId>org.springframework</groupId>
+
+            <artifactId>spring-orm</artifactId>
+
+            <version>${springframework}</version>
+
+        </dependency>
+
+        <!-- 提供JMS，Freemarker,Quartz集成服务 -->
+
+        <dependency>
+
+            <groupId>org.springframework</groupId>
+
+            <artifactId>spring-context-support</artifactId>
+
+            <version>${springframework}</version>
+
+        </dependency>
+
+        <!-- Hibernate -->
+
+        <dependency>
+
+            <groupId>org.hibernate</groupId>
+
+            <artifactId>hibernate-core</artifactId>
+
+            <version>${hibernate}</version>
+
+        </dependency>
+
+        <!-- MySQL驱动 -->
+
+        <dependency>
+
+            <groupId>mysql</groupId>
+
+            <artifactId>mysql-connector-java</artifactId>
+
+            <version>${mysql.connector}</version>
+
+        </dependency>
+
+        <!-- 连接池 -->
+
+        <dependency>
+
+            <groupId>c3p0</groupId>
+
+            <artifactId>c3p0</artifactId>
+
+            <version>${c3p0}</version>
+
+        </dependency>
+
+        <!-- log4j -->
+
+        <dependency>
+
+            <groupId>log4j</groupId>
+
+            <artifactId>log4j</artifactId>
+
+            <version>${log4j}</version>
+
+        </dependency>
+
+
+
+        <!-- activiti依赖 -->
+
+        <dependency>
+
+            <groupId>org.activiti</groupId>
+
+            <artifactId>activiti-engine</artifactId>
+
+            <version>${activiti}</version>
+
+        </dependency>
+
+        <!-- activiti 与 Spring 集成 -->
+
+        <dependency>
+
+            <groupId>org.activiti</groupId>
+
+            <artifactId>activiti-spring</artifactId>
+
+            <version>${activiti}</version>
+
+        </dependency>
+
+
+
+        <!-- web begin Spring MVC Test Framework 需要 servlet-api 3.0 以上  -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+
+       <!--
+       报错 去掉
+        java.lang.ClassNotFoundException: org.apache.jsp.index_jsp
+
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>jsp-api</artifactId>
+            <version>2.0</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>javax.servlet</groupId>
+                    <artifactId>servlet-api</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>-->
+
+        <!-- jstl -->
+
+        <dependency>
+            <groupId>jstl</groupId>
+            <artifactId>jstl</artifactId>
+            <version>${jstl}</version>
+        </dependency>
+        <dependency>
+            <groupId>taglibs</groupId>
+            <artifactId>standard</artifactId>
+            <version>1.1.2</version>
+        </dependency>
+        <!-- WEB end -->
+
+
+        <!-- junit -->
+
+        <dependency>
+
+            <groupId>junit</groupId>
+
+            <artifactId>junit</artifactId>
+
+            <version>3.8.1</version>
+
+            <scope>test</scope>
+
+        </dependency>
+
+
+
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>1.1.15</version>
+        </dependency>
+
+
+    </dependencies>
+
+
+   <!-- <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>-->
+
+</project>
