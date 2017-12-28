@@ -2,6 +2,8 @@
 <project version="4">
   <component name="Encoding" defaultCharsetForPropertiesFiles="GB2312">
     <file url="file://$PROJECT_DIR$" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Activiti工作流.docx" charset="GB2312" />
+    <file url="file://$PROJECT_DIR$/activiti完整教程.doc" charset="GB2312" />
     <file url="PROJECT" charset="GB2312" />
   </component>
 </project>
