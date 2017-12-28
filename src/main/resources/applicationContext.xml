@@ -124,6 +124,14 @@
 		<property name="basedao" ref="basedao"></property>
 	</bean>-->
 
-
+	<!-- activiti 可调用的类 这里使用  注解 就不再 配置了 -->
+	<!--<bean id="identityService" factory-bean="processEngine"   factory-method="getIdentityService" />
+	<bean id="formService" factory-bean="processEngine"   factory-method="getFormService" />
+	<bean id="repositoryService" factory-bean="processEngine"   factory-method="getRepositoryService" />
+	<bean id="runtimeService" factory-bean="processEngine"   factory-method="getRuntimeService" />
+	<bean id="taskService" factory-bean="processEngine"    factory-method="getTaskService" />
+	<bean id="historyService" factory-bean="processEngine" factory-method="getHistoryService" />
+	<bean id="managementService" factory-bean="processEngine"      factory-method="getManagementService" />
+-->
 
 </beans>  

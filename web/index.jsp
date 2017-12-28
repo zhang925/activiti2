@@ -18,7 +18,9 @@
 <body>
 <h2> Hello Activiti </h2>
 
-<a href="http://localhost:8888/process">查看流程</a>
+<a href="http://localhost:8888/process">进入流程</a>
+
+
 </body>
 </html>
 

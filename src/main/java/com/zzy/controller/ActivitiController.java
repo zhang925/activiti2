@@ -1,6 +1,5 @@
 package com.zzy.controller;
 
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -8,17 +7,15 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
-import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletResponse;
 
-import org.activiti.engine.ProcessEngine;
-import org.activiti.engine.RepositoryService;
-import org.activiti.engine.RuntimeService;
-import org.activiti.engine.TaskService;
+import com.zzy.util.Util_Diagrams;
+import org.activiti.engine.*;
 import org.activiti.engine.impl.cmd.GetDeploymentProcessDiagramCmd;
 import org.activiti.engine.impl.interceptor.Command;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.ProcessInstance;
+import org.activiti.engine.runtime.ProcessInstanceQuery;
 import org.activiti.engine.task.Task;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,14 +27,33 @@ import org.springframework.web.servlet.ModelAndView;
 public class ActivitiController {
 
 	@Resource
-	ProcessEngine engine;
+	private  ProcessEngine engine;
+
+	@Resource
+	private RuntimeService runtimeService;
+
+	@Resource
+	private IdentityService identityService;
+
+	public void test(){
+		identityService.setAuthenticatedUserId("12");//用来设置启动流程的人员ID
+
+		//插入 流程
+		Map variables = new HashMap();
+		String businessKey = "";
+		ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("leave",businessKey,variables);
+		String ProcessInstanceId = processInstance.getId();//流程
+		//查看自己为完成的任务
+		ProcessInstanceQuery query =  runtimeService.createProcessInstanceQuery().processDefinitionKey("leave").active().orderByProcessInstanceId().desc();
+		List<ProcessInstance> list = query.list();
+	}
 
 	/**
 	 * 列出所有流程模板
 	 */
 	@RequestMapping(method = RequestMethod.GET)
 	public ModelAndView list(ModelAndView mav) {
-		mav.addObject("list", Util.list());
+		mav.addObject("list", Util_Diagrams.list());
 		mav.setViewName("process/template");
 		return mav;
 	}
