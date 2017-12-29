@@ -195,19 +195,17 @@ public class ActivitiController {
 
 	@RequestMapping("goLChome")
 	public ModelAndView goLChome(String id, ModelAndView mav) {
-
-		/*RuntimeService service = engine.getRuntimeService();
-
-		service.startProcessInstanceById(id);
-
-		List<ProcessInstance> list = service.createProcessInstanceQuery()
-				.list();
-
-		mav.addObject("list", list);*/
-
 		mav.setViewName("lchome/home");
-
 		return mav;
 	}
 
+	/**
+	 * 列出所有流程模板
+	 */
+	@RequestMapping(value = "getFlowList")
+	public ModelAndView getFlowList(ModelAndView mav) {
+		mav.addObject("list", Util_Diagrams.list());
+		mav.setViewName("views/process/template");
+		return mav;
+	}
 }

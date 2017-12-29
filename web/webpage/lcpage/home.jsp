@@ -8,6 +8,7 @@
     <script>
         $(function () {
             $("iframe").each(function (i,e) {
+                //在这里可以动态的设置 iframe 的src
                 e.setAttribute("width",(document.body.clientWidth - 2)+"px");
             });
 
@@ -41,6 +42,7 @@
         </li>
         <li><a href="#beInvited" data-toggle="tab">受邀(0)</a></li>
         <li><a href="#alreadyArchived" data-toggle="tab">已归档(0)</a></li>
+        <li><a href="#starttask" data-toggle="tab">发起任务(0)</a></li>
         <li><a href="#">返回首页</a></li>
 
     </ul>
@@ -67,6 +69,11 @@
         <div class="tab-pane fade" id="alreadyArchived">
             <iframe src="webpage/lcpage/alreadyArchived.jsp"></iframe>
         </div>
+
+        <div class="tab-pane fade" id="starttask">
+            <iframe src="process"></iframe>
+        </div>
+
 
     </div>
 
