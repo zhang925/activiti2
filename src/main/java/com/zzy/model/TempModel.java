@@ -1,9 +1,10 @@
 package com.zzy.model;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.io.Serializable;
 
 @XmlRootElement
-public class TempModel {
+public class TempModel implements Serializable {
     private int id;
     private String name;
 

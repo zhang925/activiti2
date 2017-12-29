@@ -1,5 +1,8 @@
 
 访问地址：
 
+
 http://localhost:8888/process
+
+注意：静态资源 要放到 resources 目录下
 

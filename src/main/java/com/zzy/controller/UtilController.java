@@ -32,6 +32,7 @@ public class UtilController {
 	private UtilService utilService;
 
 
+
 	@RequestMapping(value = "gettable",produces = "application/json;charset=UTF-8")
 	@ResponseBody
 	public String list(HttpServletRequest request, HttpServletResponse response) {

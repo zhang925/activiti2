@@ -1,11 +1,12 @@
 package com.zzy.model;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
 @XmlRootElement
-public class MsgModel {
+public class MsgModel implements Serializable {
     private String msg;
     private List list;
 

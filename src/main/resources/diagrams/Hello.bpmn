@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" xmlns:tns="http://www.activiti.org/test" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" expressionLanguage="http://www.w3.org/1999/XPath" id="m1513905153580" name="" targetNamespace="http://www.activiti.org/test" typeLanguage="http://www.w3.org/2001/XMLSchema">
-  <process id="hello" isClosed="false" isExecutable="true" name="Hello Process" processType="None">
+  <process id="hello" isClosed="false" isExecutable="true" name="请假审批" processType="None">
     <startEvent id="startevent1" name="Start"/>
-    <userTask activiti:assignee="鐎殿喚濮崇粭�??" activiti:exclusive="true" id="submit" name="发起请假"/>
+    <userTask activiti:assignee="我是发起人" activiti:exclusive="true" id="submit" name="发起请假"/>
     <sequenceFlow id="flow1" sourceRef="startevent1" targetRef="submit"/>
-    <userTask activiti:assignee="闁哄楠稿ú锟?" activiti:exclusive="true" id="review" name="上级审批"/>
+    <userTask activiti:assignee="我是老大" activiti:exclusive="true" id="review" name="上级审批"/>
     <sequenceFlow id="flow2" sourceRef="submit" targetRef="review"/>
     <endEvent id="endevent1" name="End"/>
     <sequenceFlow id="flow3" sourceRef="review" targetRef="endevent1"/>

@@ -1,6 +1,15 @@
 package com.zzy.model;
 
-public class Role  {
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import java.io.Serializable;
+
+@Entity
+@Table(name = "a_role")
+public class Role implements Serializable {
+
+    @Id
     public Integer id;
     public String name;
 

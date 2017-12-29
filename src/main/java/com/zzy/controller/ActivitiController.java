@@ -2,9 +2,7 @@ package com.zzy.controller;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -15,7 +13,6 @@ import org.activiti.engine.impl.cmd.GetDeploymentProcessDiagramCmd;
 import org.activiti.engine.impl.interceptor.Command;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.ProcessInstance;
-import org.activiti.engine.runtime.ProcessInstanceQuery;
 import org.activiti.engine.task.Task;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,7 +26,7 @@ public class ActivitiController {
 	@Resource
 	private  ProcessEngine engine;
 
-	@Resource
+	/*@Resource
 	private RuntimeService runtimeService;
 
 	@Resource
@@ -46,7 +43,7 @@ public class ActivitiController {
 		//查看自己为完成的任务
 		ProcessInstanceQuery query =  runtimeService.createProcessInstanceQuery().processDefinitionKey("leave").active().orderByProcessInstanceId().desc();
 		List<ProcessInstance> list = query.list();
-	}
+	}*/
 
 	/**
 	 * 列出所有流程模板
@@ -54,7 +51,7 @@ public class ActivitiController {
 	@RequestMapping(method = RequestMethod.GET)
 	public ModelAndView list(ModelAndView mav) {
 		mav.addObject("list", Util_Diagrams.list());
-		mav.setViewName("process/template");
+		mav.setViewName("views/process/template");
 		return mav;
 	}
 
@@ -74,7 +71,7 @@ public class ActivitiController {
 				.list();
 
 		mav.addObject("list", list);
-		mav.setViewName("process/deployed");
+		mav.setViewName("views/process/deployed");
 		return mav;
 	}
 
@@ -90,7 +87,7 @@ public class ActivitiController {
 				.list();
 
 		mav.addObject("list", list);
-		mav.setViewName("process/deployed");
+		mav.setViewName("views/process/deployed");
 
 		return mav;
 	}
@@ -110,7 +107,7 @@ public class ActivitiController {
 				.list();
 
 		mav.addObject("list", list);
-		mav.setViewName("process/started");
+		mav.setViewName("views/process/started");
 
 		return mav;
 	}
@@ -122,25 +119,31 @@ public class ActivitiController {
 	public ModelAndView started(ModelAndView mav) {
 
 		RuntimeService service = engine.getRuntimeService();
-
 		List<ProcessInstance> list = service.createProcessInstanceQuery()
 				.list();
-
 		mav.addObject("list", list);
-		mav.setViewName("process/started");
+		mav.setViewName("views/process/started");
 
 		return mav;
 	}
-	
+
+	/**
+	 * 任务列表
+	 * @param mav
+	 * @return
+	 */
 	@RequestMapping("task")
 	public ModelAndView task(ModelAndView mav){
 		TaskService service=engine.getTaskService();
 		List<Task> list=service.createTaskQuery().list();
 		mav.addObject("list", list);
-		mav.setViewName("process/task");
+		mav.setViewName("views/process/task");
 		return mav;
 	}
-	
+
+	/**
+	 * 完成任务
+	 */
 	@RequestMapping("complete")
 	public ModelAndView complete(ModelAndView mav,String id){
 		
@@ -152,9 +155,8 @@ public class ActivitiController {
 	}
 
 	/**
-	 * 所有已启动流程实例
-	 * 
-	 * @throws IOException
+	 * 所有已启动流程实例 图
+	 *
 	 */
 	@RequestMapping("graphics")
 	public void graphics(String definitionId, String instanceId,
@@ -187,4 +189,25 @@ public class ActivitiController {
 			}
 		}
 	}
+
+
+
+
+	@RequestMapping("goLChome")
+	public ModelAndView goLChome(String id, ModelAndView mav) {
+
+		/*RuntimeService service = engine.getRuntimeService();
+
+		service.startProcessInstanceById(id);
+
+		List<ProcessInstance> list = service.createProcessInstanceQuery()
+				.list();
+
+		mav.addObject("list", list);*/
+
+		mav.setViewName("lchome/home");
+
+		return mav;
+	}
+
 }
