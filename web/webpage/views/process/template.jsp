@@ -39,14 +39,14 @@ a {
 				<c:forEach var="temp" items="${list}">
 					<tr>
 						<td>${temp }</td>
-						<td><a href="process/deploy?processName=${temp }">部署</a></td>
+						<td><a href="activitiController/deploy?processName=${temp }">部署</a></td>
 					</tr>
 				</c:forEach>
 			</tbody>
 		</table><br>
-		<a href="process/deployed">已部署流程</a>
-		<a href="process/started">已启动流程</a>
-		<a href="process/task">任务列表</a>
+		<a href="activitiController/deployed">已部署流程</a>
+		<a href="activitiController/started">已启动流程</a>
+		<a href="activitiController/task">任务列表</a>
 	</div>
 </body>
 </html>

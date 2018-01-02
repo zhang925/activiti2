@@ -28,7 +28,7 @@
 
 <a href="webpage/lcpage/home.jsp">进入个人流程主页</a>
 
-<a href="http://localhost:8888/process">进入流程</a>
+<a href="http://localhost:8888/activitiController">进入流程</a>
 
 
 </body>
@@ -45,7 +45,7 @@
                 data:$("#ff").serialize(),
                 success: function(data) {
                    if(data.result == "success"){
-                       location.href="process";
+                       location.href="activitiController";
                    }else{
                        alert("用户名或者密码错误");
                    }

@@ -40,14 +40,14 @@ a {
 			<tbody>
 				<c:forEach var="temp" items="${list}">
 					<tr>
-						<td>${temp.id}</td><td>${temp.name}</td><td>${temp.assignee}</td><td><a href="../process/complete?id=${temp.id}">完成</a> <a href="../process/graphics?taskId=${temp.id}">图形</a></td>
+						<td>${temp.id}</td><td>${temp.name}</td><td>${temp.assignee}</td><td><a href="../activitiController/complete?id=${temp.id}">完成</a> <a href="../activitiController/graphics?taskId=${temp.id}">图形</a></td>
 					</tr>
 				</c:forEach>
 			</tbody>
 		</table>
-		<a href="../process">流程模板</a>
-		<a href="../process/deployed">已部署流程</a>
-		<a href="../process/started">已启动流程</a>
+		<a href="../activitiController">流程模板</a>
+		<a href="../activitiController/deployed">已部署流程</a>
+		<a href="../activitiController/started">已启动流程</a>
 	</div>
 </body>
 </html>

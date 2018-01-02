@@ -7,10 +7,26 @@
     <jsp:include page="../common/bootstrapLink.jsp"></jsp:include>
     <script>
         $(function () {
+            //设置 ifame 属性 
             $("iframe").each(function (i,e) {
                 //在这里可以动态的设置 iframe 的src
-                e.setAttribute("width",(document.body.clientWidth - 2)+"px");
+                e.setAttribute("width",(document.body.clientWidth)+"px");
+                e.setAttribute("height",(document.body.clientHeight - 45)+"px");
+                e.setAttribute("frameborder",0);
+                e.setAttribute("scrolling","no");
             });
+            
+            // 获取 流程数量
+            $.ajax({
+                url:"activitiController/tasknum",
+                dataType:"json",
+                type:"GET",
+                success:function (data) {
+                    $("#deploynum").text(data.deploynum);//可部署的数量
+                    $("#starttasknum").text(data.starttasknum);//可发起的数量
+                }
+            });
+            
 
         });
     </script>
@@ -42,9 +58,9 @@
         </li>
         <li><a href="#beInvited" data-toggle="tab">受邀(0)</a></li>
         <li><a href="#alreadyArchived" data-toggle="tab">已归档(0)</a></li>
-        <li><a href="#starttask" data-toggle="tab">发起任务(0)</a></li>
+        <li><a href="#starttask" data-toggle="tab">发起任务(<span id="starttasknum">0</span>)</a></li>
+        <li><a href="#deployList" data-toggle="tab">部署任务(<span id="deploynum">0</span>)</a></li>
         <li><a href="#">返回首页</a></li>
-
     </ul>
 
 
@@ -73,6 +89,11 @@
         <!-- 发起任务 -->
         <div class="tab-pane fade" id="starttask">
             <iframe src="webpage/lcpage/starttask.jsp"></iframe>
+        </div>
+
+        <!-- 部署任务 -->
+        <div class="tab-pane fade" id="deployList">
+            <iframe src="activitiController/deployList"></iframe>
         </div>
 
 

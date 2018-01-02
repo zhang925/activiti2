@@ -5,8 +5,11 @@ import java.io.InputStream;
 import java.util.List;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.zzy.util.Util_Diagrams;
 import org.activiti.engine.*;
 import org.activiti.engine.impl.cmd.GetDeploymentProcessDiagramCmd;
@@ -20,7 +23,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
 
 @Controller
-@RequestMapping("/process")
+@RequestMapping("/activitiController")
 public class ActivitiController {
 
 	@Resource
@@ -192,13 +195,6 @@ public class ActivitiController {
 
 
 
-
-	@RequestMapping("goLChome")
-	public ModelAndView goLChome(String id, ModelAndView mav) {
-		mav.setViewName("lchome/home");
-		return mav;
-	}
-
 	/**
 	 * 列出所有流程模板
 	 */
@@ -207,5 +203,107 @@ public class ActivitiController {
 		mav.addObject("list", Util_Diagrams.list());
 		mav.setViewName("views/process/template");
 		return mav;
+	}
+
+
+
+
+
+	/*-------------- 分界线 自己写的 流程 --------------------------------------------------------*/
+
+
+
+	@RequestMapping("goLChome")
+	public ModelAndView goLChome(String id, ModelAndView mav) {
+		mav.setViewName("lchome/home");
+		return mav;
+	}
+
+
+	@RequestMapping(value ="tasknum",method = RequestMethod.GET)
+	public void tasknum(HttpServletResponse response) {
+		JSONObject json = new JSONObject();
+
+		//可部署的流程数
+		String deployList[] = Util_Diagrams.list();
+		int deploynum = 0;
+		if(deployList!=null){
+			deploynum = deployList.length;
+		}
+		json.put("deploynum", deploynum);
+
+		//可发起的 流程数
+		RepositoryService service = engine.getRepositoryService();
+		List<ProcessDefinition> starttasklist = service.createProcessDefinitionQuery().list();
+		int starttasknum = 0;
+		if(starttasklist!=null){
+			starttasknum = starttasklist.size();
+		}
+		json.put("starttasknum", starttasknum);
+
+		try {
+			response.getWriter().print(json.toString());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	/**
+	 * 查看 可以 部署 的 流程 文件列表【这个权限最好归 管理员】
+	 * @return
+	 */
+	@RequestMapping(value ="deployList",method = RequestMethod.GET)
+	public ModelAndView deployList(ModelAndView mav) {
+		String deployList[] = Util_Diagrams.list();
+		mav.addObject("list", deployList);
+		int num = 0;
+		if(deployList!=null){
+			num = deployList.length;
+		}
+		mav.addObject("num",num);
+		mav.setViewName("lcpage/deployList");
+		return mav;
+	}
+
+
+	/**
+	 * 可以 发起 流程的 列表
+	 * @param mav
+	 * @return
+	 */
+	@RequestMapping("starttaskList")
+	public ModelAndView starttaskList(ModelAndView mav) {
+		RepositoryService service = engine.getRepositoryService();
+		List<ProcessDefinition> list = service.createProcessDefinitionQuery().list();
+		mav.addObject("list", list);
+		mav.setViewName("lcpage/starttask");
+		return mav;
+	}
+
+
+	/**
+	 * 部署流程
+	 */
+	@RequestMapping("deploytask")
+	public void deploytask(String processName, HttpServletResponse response) {
+
+		RepositoryService service = engine.getRepositoryService();
+		if (null != processName){
+			service.createDeployment().addClasspathResource("diagrams/" + processName).deploy();
+		}
+		JSONObject json = new JSONObject();
+
+		//已经部署的列表
+//		List<ProcessDefinition> list = service.createProcessDefinitionQuery().list();
+//		json.put("list", list);
+
+		json.put("state", "success");
+		try {
+			response.getWriter().print(json.toString());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 	}
 }
