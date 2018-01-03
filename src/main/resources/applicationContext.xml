@@ -117,12 +117,11 @@
 		<property name="sessionFactory" ref="sessionFactory"></property>
 	</bean>
 
-
-
-
-	<!--<bean id="utilService" class="com.zzy.service.impl.UtilServiceImpl">
+	<bean id="utilService" class="com.zzy.service.impl.UtilServiceImpl">
+		<property name="sessionFactory" ref="sessionFactory"></property>
 		<property name="basedao" ref="basedao"></property>
-	</bean>-->
+	</bean>
+
 
 	<!-- activiti 可调用的类 这里使用  注解 就不再 配置了 -->
 	<!--<bean id="identityService" factory-bean="processEngine"   factory-method="getIdentityService" />

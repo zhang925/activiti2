@@ -177,5 +177,9 @@ public interface BaseDao<T> {
 	public List<T> find(Criteria cr, Integer page, Integer rows);
 
 
-	public List getListSql(String sql);
+	public List getListBySql(String sql);
+
+	/**执行sql无返回值*/
+	public void executeSql(String sql);
+
 }

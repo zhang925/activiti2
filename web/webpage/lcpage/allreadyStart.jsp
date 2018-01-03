@@ -1,11 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <html>
 <head>
-    <title>可部署的流程</title>
+    <title>我的任务</title>
     <!-- 引入bootstrap 包含 jquery -->
     <jsp:include page="../common/bootstrapLink.jsp"></jsp:include>
-
     <style>
         .table th, .table td {
             text-align: center;
@@ -17,9 +15,9 @@
 
 
 
-        function loadstarttask() {//加载可发起的任务数据
+        function loadallreadyStarttaskList() {//加载可发起的任务数据
             $.ajax({
-                url:"activitiController/starttaskList",
+                url:"activitiController/allreadyStarttaskList",
                 dataType:"json",
                 type:"GET",
                 async:false,
@@ -27,46 +25,31 @@
                     var list = data.list;
                     $("#tbody").html("");//清空以前的数据，加载新数据
                     var appendHtml = "";
+
                     if(list){
                         list.forEach(function (value) {
                             var id = value.id;
                             var name = value.name;
-                            var deploytime = value.deploytime;
+                            var deploytime = value.createtime;
                             appendHtml += " <tr><td>"+id+"</td>";
                             appendHtml += " <td>"+name+"</td>";
                             appendHtml += " <td>"+deploytime+"</td>";
                             appendHtml += " <td>";
-                            appendHtml += " <button type=\"button\" onclick=\"starttask('"+id+"')\" class=\"btn btn-info\">启动流程</button>";
                             appendHtml += " <button type=\"button\" onclick=\"tuxing('"+id+"','"+name+"')\" class=\"btn btn-warning\">流程图</button>";
-                            appendHtml += " <button type=\"button\" onclick=\"qxbs('"+id+"')\" class=\"btn btn-danger\">取消部署</button>";
+                            appendHtml += " <button type=\"button\" onclick=\"qxbs('"+id+"')\" class=\"btn btn-danger\">取消发起</button>";
                             appendHtml += " </td></tr>";
                         });
                     }
-                   $("#tbody").append(appendHtml);
+
+                    $("#tbody").append(appendHtml);
 
                 }
             });
         }
 
-
-        function starttask(id) { //启动流程
-            var url = "../activitiController/starttask";
-            $.ajax({
-                url:url,
-                dataType:"json",
-                type:"POST",
-                data:{"id":id},
-                async:false,
-                success:function (data) {
-                    parent.shownum(); //调用 父级方法 刷新 任务数量
-                    window.parent.document.getElementById("allreadystarttaskiframe").contentWindow.loadallreadyStarttaskList();//刷新 已经启动的列表
-                    alert(data.state);
-                }
-            });
-        }
 
         function tuxing(definitionId,name) {//显示图形
-            var url = "../activitiController/graphics?definitionId="+definitionId;
+            var url = "../activitiController/graphics?instanceId="+definitionId;
             var graphicsIframe = document.getElementById("graphics");
             graphicsIframe.setAttribute("width",(document.body.clientWidth)+"px");
             graphicsIframe.setAttribute("height",( document.body.clientHeight / 2 )+"px");
@@ -75,8 +58,14 @@
             $("#tips").click();
         }
 
-        function qxbs(id) {//取消部署
-            $.ajax({
+
+
+
+
+        function qxbs(id) {//取消 发布 任务
+
+            alert(id);
+           /* $.ajax({
                 url:"activitiController/delDeployed",
                 dataType:"json",
                 type:"POST",
@@ -87,65 +76,47 @@
                     parent.shownum(); //调用 父级方法 刷新 任务数量
                     alert(data.state);
                 }
-            });
+            });*/
         }
 
         $(function () {
-            loadstarttask();//加载数据
+            loadallreadyStarttaskList();//加载数据
         });
 
     </script>
-
 </head>
 <body>
-
-<div>
-
-    <div class="panel panel-info">
-        <div class="panel-heading">
-            <h3 class="panel-title">可发起的任务列表</h3>
-        </div>
-        <div class="panel-body">
-            <div class="table-responsive">
+<div class="panel panel-info">
+    <div class="panel-heading">
+        <h3 class="panel-title">已经发起的任务列表</h3>
+    </div>
+    <div class="panel-body">
+        <div class="table-responsive">
 
 
-                <table class="table">
-                    <%-- <caption>响应式表格布局</caption>--%>
-                    <thead >
+            <table class="table">
+                <%-- <caption>响应式表格布局</caption>--%>
+                <thead >
 
-                    <tr>
-                        <th >流程ID</th>
-                        <th >流程名称</th>
-                        <th >部署时间</th>
-                        <th >操作</th>
-                    </tr>
+                <tr>
+                    <th >任务ID</th>
+                    <th >流程名称</th>
+                    <th >发起时间</th>
+                    <th >操作</th>
+                </tr>
 
-                    </thead>
+                </thead>
 
-                    <tbody id="tbody">
+                <tbody id="tbody">
 
-                        <%--<c:forEach var="temp" items="${list}">
-                            <tr >
-                                <td>${temp.id}</td>
-                                <td>${temp.name}</td>
-                                <td>
-                                    <button type="button" onclick="starttask('${temp.id}')" class="btn btn-info">启动流程</button>
-                                    <button type="button" onclick="tuxing('${temp.id}')" class="btn btn-warning">图形</button>
-
-                                </td>
-                            </tr>
-                        </c:forEach>--%>
-
-                    </tbody>
-                </table>
+                </tbody>
+            </table>
 
 
-            </div>
         </div>
     </div>
 </div>
-
-
+</div>
 
 
 
@@ -169,6 +140,8 @@
         </div><!-- /.modal-content -->
     </div><!-- /.modal -->
 </div>
+
+
 
 </body>
 </html>

@@ -11,40 +11,41 @@ import org.springframework.transaction.annotation.Transactional;
 import com.zzy.dao.BaseDao;
 import com.zzy.service.UtilService;
 
-@Transactional
+
 @Service
+@Transactional
 public class UtilServiceImpl implements UtilService {
 
-	@Autowired
+
 	private BaseDao basedao;
 
-//	public BaseDao getBasedao() {
-//		return basedao;
-//	}
-//
-//	public void setBasedao(BaseDao basedao) {
-//		this.basedao = basedao;
-//	}
+	public BaseDao getBasedao() {
+		return basedao;
+	}
 
+	public void setBasedao(BaseDao basedao) {
+		this.basedao = basedao;
+	}
 
 	private SessionFactory sessionFactory;
 
 	public SessionFactory getSessionFactory() {
 		return sessionFactory;
 	}
-	
+
 	public void setSessionFactory(SessionFactory sessionFactory) {
 		this.sessionFactory = sessionFactory;
 	}
-	
+
 	private Session getCurrentSession() {
 		return sessionFactory.getCurrentSession();
 	}
-	public Session getSession() {  
-        //事务必须是开启的，否则获取不到  
-        return sessionFactory.getCurrentSession();  
-    }  
-	
+	public Session getSession() {
+		//事务必须是开启的，否则获取不到
+		return sessionFactory.getCurrentSession();
+	}
+
+
 	public String getSysID() {
 		Session session = this.getCurrentSession();
 		//Transaction tx = session.beginTransaction();//只是查询系统ID
@@ -82,7 +83,10 @@ public class UtilServiceImpl implements UtilService {
 
 
 	public List<Object[]> getListBySql(String sql) {
-		return basedao.getListSql(sql);
+		Session session = this.getCurrentSession();
+		List<Object[]> list = session.createSQLQuery(sql).list();
+		return list;
+		//return basedao.getListBySql(sql);
 	}
 
 	public void executeSql(String sql) {

@@ -22,6 +22,9 @@
                 data: {"processName": processName},
                 success: function (data) {
                     $("#tips").click();//显示提示语言
+                    //window.parent.document.getElementById("shownum"); //使用父级 元素
+                    parent.shownum(); //调用 父级方法 刷新 任务数量
+                    parent.loadstarttaskIframe();// 刷新 发起任务 的数据
                 }
             });
         }
@@ -94,7 +97,7 @@
                      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                      <h4 class="modal-title" id="myModalLabel">提示</h4>
                  </div>
-                 <div class="modal-body">已经部署成功！请到【发起任务】任务列表查看！</div>
+                 <div class="modal-body">已经部署成功！请到【发起任务】查看！</div>
                  <div class="modal-footer">
                      <button type="button" class="btn btn-default" data-dismiss="modal">确定</button>
                  </div>

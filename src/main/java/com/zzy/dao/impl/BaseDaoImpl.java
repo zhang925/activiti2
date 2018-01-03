@@ -188,9 +188,14 @@ public class BaseDaoImpl<T> implements BaseDao<T> {
 		return cr.list();
 	}
 
-	public List getListSql(String sql) {
+	public List getListBySql(String sql) {
 		Session session = this.getCurrentSession();
 		List<Object[]> list = session.createSQLQuery(sql).list();
 		return list;
+	}
+
+	public void executeSql(String sql){
+		SQLQuery query = this.getCurrentSession().createSQLQuery(sql);
+		query.executeUpdate();
 	}
 }
