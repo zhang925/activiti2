@@ -16,6 +16,8 @@
                     $("#deploynum").text(data.deploynum);//可部署的数量
                     $("#starttasknum").text(data.starttasknum);//可发起的数量
                     $("#allreadyStartnum").text(data.allreadyStartnum);//已经发起的数量
+                    $("#daibannum").text(data.daibannum);// 代办 数量
+                    $("#flowHistorynum").text(data.flowHistorynum);//历史
 
                 }
             });
@@ -50,7 +52,7 @@
 
     <ul id="myTab" class="nav nav-tabs">
         <li class="active">
-            <a href="#waitingProcessing" data-toggle="tab">待办任务(0)</a>
+            <a href="#waitingProcessing" data-toggle="tab">待办任务(<span id="daibannum">0</span>)</a>
         </li>
 
         <li class="dropdown">
@@ -65,7 +67,7 @@
             </ul>
         </li>
         <li><a href="#beInvited" data-toggle="tab">受邀(0)</a></li>
-        <li><a href="#alreadyArchived" data-toggle="tab">已归档(0)</a></li>
+        <li><a href="#flowHistory" data-toggle="tab">已归档(<span id="flowHistorynum">0</span>)</a></li>
         <li><a href="#starttask" data-toggle="tab">可发起的任务(<span id="starttasknum">0</span>)</a></li>
         <li><a href="#allreadyStart" data-toggle="tab">已发起的任务(<span id="allreadyStartnum">0</span>)</a></li>
         <li><a href="#deployList" data-toggle="tab">部署任务(<span id="deploynum">0</span>)</a></li>
@@ -76,7 +78,7 @@
     <div id="myTabContent" class="tab-content">
 
         <div class="tab-pane fade in active" id="waitingProcessing">
-            <iframe src="webpage/lcpage/waitingProcessing.jsp"></iframe>
+            <iframe id="waitingProcessingIframe" src="webpage/lcpage/waitingProcessing.jsp"></iframe>
         </div>
 
 
@@ -89,8 +91,9 @@
             <iframe src="webpage/lcpage/beInvited.jsp"></iframe>
         </div>
 
-        <div class="tab-pane fade" id="alreadyArchived">
-            <iframe src="webpage/lcpage/alreadyArchived.jsp"></iframe>
+        <%--已经归档的任务--%>
+        <div class="tab-pane fade" id="flowHistory">
+            <iframe id="flowHistoryIfame" src="webpage/lcpage/flowHistory.jsp"></iframe>
         </div>
 
         <!-- 发起任务 -->

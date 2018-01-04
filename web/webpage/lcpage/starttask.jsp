@@ -2,7 +2,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <html>
 <head>
-    <title>可部署的流程</title>
+    <title>可发起的任务列表</title>
     <!-- 引入bootstrap 包含 jquery -->
     <jsp:include page="../common/bootstrapLink.jsp"></jsp:include>
 
@@ -60,6 +60,7 @@
                 success:function (data) {
                     parent.shownum(); //调用 父级方法 刷新 任务数量
                     window.parent.document.getElementById("allreadystarttaskiframe").contentWindow.loadallreadyStarttaskList();//刷新 已经启动的列表
+                    window.parent.document.getElementById("waitingProcessingIframe").contentWindow.loadMyTaskList();//刷新 代办
                     alert(data.state);
                 }
             });

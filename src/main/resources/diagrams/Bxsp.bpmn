@@ -8,7 +8,6 @@
     <sequenceFlow id="_6" sourceRef="_start" targetRef="_txbd"/>
     <sequenceFlow id="_7" name="提交表单" sourceRef="_txbd" targetRef="_sjsh"/>
     <sequenceFlow id="_8" name="审核通过" sourceRef="_sjsh" targetRef="_5"/>
-    <sequenceFlow id="_2" name="审核不通过" sourceRef="_sjsh" targetRef="_txbd"/>
   </process>
   <bpmndi:BPMNDiagram documentation="background=#FFFFFF;count=1;horizontalcount=1;orientation=0;width=842.4;height=1195.2;imageableWidth=832.4;imageableHeight=1185.2;imageableX=5.0;imageableY=5.0" id="Diagram-_1" name="New Diagram">
     <bpmndi:BPMNPlane bpmnElement="myProcess_1">
@@ -36,14 +35,6 @@
           <dc:Bounds height="32.0" width="32.0" x="0.0" y="0.0"/>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge bpmnElement="_2" id="BPMNEdge__2" sourceElement="_sjsh" targetElement="_txbd">
-        <di:waypoint x="417.5" y="165.0"/>
-        <di:waypoint x="313.0" y="260.0"/>
-        <di:waypoint x="227.5" y="165.0"/>
-        <bpmndi:BPMNLabel>
-          <dc:Bounds height="0.0" width="0.0" x="0.0" y="0.0"/>
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="_6" id="BPMNEdge__6" sourceElement="_start" targetElement="_txbd">
         <di:waypoint x="102.0" y="126.0"/>
         <di:waypoint x="185.0" y="137.5"/>

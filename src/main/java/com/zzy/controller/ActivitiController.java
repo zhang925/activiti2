@@ -3,6 +3,7 @@ package com.zzy.controller;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import javax.annotation.Resource;
@@ -14,8 +15,15 @@ import com.alibaba.fastjson.JSONObject;
 import com.zzy.service.UtilService;
 import com.zzy.util.Util_Diagrams;
 import org.activiti.engine.*;
+import org.activiti.engine.history.HistoricActivityInstance;
+import org.activiti.engine.history.HistoricProcessInstance;
+import org.activiti.engine.history.HistoricTaskInstance;
+import org.activiti.engine.impl.RepositoryServiceImpl;
 import org.activiti.engine.impl.cmd.GetDeploymentProcessDiagramCmd;
 import org.activiti.engine.impl.interceptor.Command;
+import org.activiti.engine.impl.persistence.entity.HistoricProcessInstanceEntity;
+import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity;
+import org.activiti.engine.impl.pvm.process.ActivityImpl;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
@@ -253,6 +261,14 @@ public class ActivitiController {
         }
         json.put("allreadyStartnum", allreadyStartnum);
 
+       //获取代办数量。
+        int daibannum = getDaiBanNum("小马哥");//这里暂定为小马哥
+        json.put("daibannum", daibannum);
+
+        //已经归档的数量
+        int flowHistorynum = getFlowHistorynum();
+        json.put("flowHistorynum", flowHistorynum);
+
         try {
             response.getWriter().print(json.toString());
         } catch (IOException e) {
@@ -328,7 +344,7 @@ public class ActivitiController {
 
     }
     /**
-     * 可以 发起 流程的 列表
+     * 已经 发起 流程的 列表
      * @return
      */
     @RequestMapping("allreadyStarttaskList")
@@ -349,6 +365,7 @@ public class ActivitiController {
                map.put("createtime", date.substring(0, 19));
                ProcessDefinition p01 = service01.createProcessDefinitionQuery().processDefinitionId(p.getProcessDefinitionId()).singleResult();
                map.put("name", p01.getName());
+               map.put("pid", p01.getId());//PROC_INST_ID_ 流程的ID
                list1.add(map);
             }
         }
@@ -402,6 +419,208 @@ public class ActivitiController {
         }
     }
 
+
+    /**
+     * 任务列表 代办任务
+     * @return
+     */
+    @RequestMapping("myTaskList")
+    public void task(HttpServletRequest request,HttpServletResponse response) {
+        String userid = request.getParameter("userid");
+        TaskService service = engine.getTaskService();
+        List<Task> list = service.createTaskQuery().list();
+        //如果传递了 userid 则按照 userid 来 查询
+        if(list!=null && userid!=null && !"".equals(userid) ){
+            for(Task task : list){
+                if(!userid.equals(task.getAssignee())){
+                    list.remove(task);
+                }
+            }
+        }
+
+        // json 不支持 转换 间接放到 Map  中去
+        List listResult = new ArrayList();
+        for(Task task : list){
+            Map map = new HashMap();
+            map.put("id",task.getId());//任务ID
+            map.put("piid",task.getProcessInstanceId()); // 部署信息的ID
+            map.put("name",task.getAssignee()); // 任务执行人
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+            map.put("createtime",sdf.format(task.getCreateTime()));//任务创建时间
+            map.put("pid",task.getProcessDefinitionId());//流程ID
+            listResult.add(map);
+        }
+
+        JSONObject json = new JSONObject();
+        json.put("list", listResult);
+        try {
+            response.getWriter().print(json.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 完成任务
+     */
+    @RequestMapping("completeTask")
+    public void complete(HttpServletRequest request,HttpServletResponse response) {
+        TaskService service = engine.getTaskService();
+        service.complete(request.getParameter("id"));
+        JSONObject json = new JSONObject();
+        json.put("state", "任务已经完成！");
+        try {
+            response.getWriter().print(json.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 撤回任务节点
+     * @param request
+     * @param response
+     */
+    @RequestMapping("revokeTask")
+    public void revokeTask(HttpServletRequest request,HttpServletResponse response){
+        String taskId = request.getParameter("request");
+        String activityId = request.getParameter("activityId");
+        String state = "";
+        HistoricTaskInstance historicTaskInstance = engine.getHistoryService().createHistoricTaskInstanceQuery()
+                .taskId(taskId).finished().singleResult();
+        if(historicTaskInstance !=null){
+            state = "任务已结束，不能进行回退操作！";
+        }
+        if(activityId == null || "".equals(activityId)){
+            state = "回退目标节点不能为空！";
+        }
+        long count = engine.getTaskService().createTaskQuery().taskId(taskId).count();
+        if(count == 0){
+            state = "要驳回的任务已不存在！";
+        }
+
+        Task currentTask = engine.getTaskService().createTaskQuery().taskId(taskId).singleResult();
+        ProcessDefinitionEntity definitionEntity = (ProcessDefinitionEntity) ((RepositoryServiceImpl) engine.getRepositoryService()).getProcessDefinition(currentTask.getProcessDefinitionId());
+        String instanceId = currentTask.getProcessInstanceId();
+        ActivityImpl activityImpl = definitionEntity.findActivity(activityId);
+        if(activityImpl == null){
+            state = "要驳回的节点不存在！";
+        }
+
+        //engine.getManagementService().executeCommand(new JumpActivityCmd(activityId, instanceId)) ; //managerService activiti 七大服务之一
+/*import org.activiti.engine.impl.interceptor.Command;
+import org.activiti.engine.impl.interceptor.CommandContext;
+import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
+import org.activiti.engine.impl.pvm.process.ActivityImpl;
+import org.activiti.engine.impl.pvm.process.ProcessDefinitionImpl;
+
+
+        public class JumpActivityCmd implements Command<Object> {
+
+            private String activityId;
+            private String processInstanceId;
+            private String jumpOrigin;
+
+
+            public JumpActivityCmd(String activityId, String processInstanceId,String jumpOrigin) {
+                this.activityId = activityId;
+                this.processInstanceId = processInstanceId;
+                this.jumpOrigin = jumpOrigin;
+            }
+
+            public JumpActivityCmd(String activityId, String processInstanceId) {
+                this(activityId,processInstanceId,"jump");
+            }
+
+
+            public Object execute(CommandContext commandContext) {
+                ExecutionEntity executionEntity = commandContext.getExecutionEntityManager().findExecutionById(processInstanceId);
+                executionEntity.destroyScope(jumpOrigin);
+                ProcessDefinitionImpl processDefinition = executionEntity.getProcessDefinition();
+                ActivityImpl activity = processDefinition.findActivity(activityId);
+                executionEntity.executeActivity(activity);
+                return executionEntity;
+            }
+
+
+        }*/
+
+        JSONObject json = new JSONObject();
+        json.put("state", "已经撤回！");
+        try {
+            response.getWriter().print(json.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 已经 归档 的 任务
+     * @param request
+     * @param response
+     */
+    @RequestMapping("flowHistory")
+    public void flowHistory(HttpServletRequest request,HttpServletResponse response){
+        //List<HistoricActivityInstance> list = engine.getHistoryService().createHistoricActivityInstanceQuery()
+         //       .orderByHistoricActivityInstanceStartTime().asc().list();
+
+        List<HistoricProcessInstance> list =  engine.getHistoryService().createHistoricProcessInstanceQuery().list();
+
+        List resultList = new ArrayList();
+        if(list!=null && list.size()>0){
+            for(HistoricProcessInstance hp: list){
+                if(hp.getEndTime()!=null){//说明已经 归档了
+                    Map map = new HashMap();
+                    map.put("startActivitiId", hp.getStartActivityId());//activity的ID
+                    map.put("id", hp.getId());
+                    //String a = hp.getSuperProcessInstanceId();//这个和hp的ID一样 act_hi_procinst 的id//HistoricProcessInstanceEntity
+                    map.put("pid", hp.getProcessDefinitionId());//流程ID
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+                    map.put("starttime", sdf.format(hp.getStartTime()));// 开始时间
+                    map.put("endtime", sdf.format(hp.getEndTime()));//  结束时间
+                    Long d = hp.getEndTime().getTime() - hp.getStartTime().getTime() ;
+                    double timetemp2 = (double)( d / 1000 ); //单位秒
+                    String lasttime = "";
+                    if(timetemp2/60<1){//单位为秒
+                        lasttime = timetemp2 + "秒";
+                    }else if(timetemp2/60>=1 && timetemp2/60/60<=1 ){//在以分钟为单位的时间完成
+                        lasttime = timetemp2/60 + "分";
+                    }else if(timetemp2/60/60>1 && timetemp2/60/60/24<=1){//小时为单位
+                        lasttime = timetemp2/60/60 + "小时";
+                    }else if(timetemp2/60/60/24>1){//天
+                        lasttime = timetemp2/60/60/24 + "天";
+                    }
+                    map.put("lasttime", lasttime.substring(0,lasttime.indexOf(".")+3));//  经历 时间
+
+                    //Date lastdate = hp.getEndTime() - hp.getStartTime();
+                    ProcessDefinition p = engine.getRepositoryService().createProcessDefinitionQuery()
+                            .processDefinitionId(hp.getProcessDefinitionId()).singleResult();
+                    map.put("name",p.getName());//流程的名字
+                    resultList.add(map);
+                }
+            }
+        }
+        JSONObject json = new JSONObject();
+        json.put("list", resultList);
+        try {
+            response.getWriter().print(json.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
     /**
      * 取消部署 流程
      * @param id
@@ -450,18 +669,55 @@ public class ActivitiController {
         out.print(json.toString());
     }
 
-    /**
+    /*****      ***这个方法不可 取 暂时 没 弄 出来 有待 完善*****
      * 取消 发起 流程
-     *
-     * @param id
      * @param response
      */
     @RequestMapping("delStarted")
-    public void delStarted(String id, HttpServletResponse response) {
-        //判断是否 流程 已经执行
-        if (1 == 1) {
+    public void delStarted(HttpServletRequest request,HttpServletResponse response) {
+        String id,  flag ,pid;
+        id = request.getParameter("id");
+        pid = request.getParameter("pid");
+        flag = request.getParameter("id");
 
+
+        JSONObject json = new JSONObject();
+        String state = "";
+        RepositoryService service = engine.getRepositoryService();
+
+        //RuntimeService service2 = engine.getRuntimeService();
+        ///List list01 = service2.createProcessInstanceQuery().list();//启动流程后的关联表
+        //Task task = engine.getTaskService().createTaskQuery().taskId("").singleResult();
+        //engine.getTaskService().deleteTask("2474",true);
+        // engine.getTaskService().delegateTask("2008","小马哥");
+        //判断是否 流程 已经执行 act_hi_taskinst
+        // PROC_INST_ID_ = id 是 act_ru_execution 表的 ID_
+        // PROC_DEF_ID_  = pid 流程id
+        String sql = "select ID_ from act_hi_taskinst where PROC_DEF_ID_ = '"+pid+"' and  PROC_INST_ID_=" + id +" and DELETE_REASON_ = 'completed'" ;
+        List list = utilService.getListBySql(sql);
+
+        //根据 流程 ID 获取当前流程
+        ProcessDefinition processDefinition = service.createProcessDefinitionQuery().processDefinitionId(pid).singleResult();
+        String dpid = processDefinition.getDeploymentId();
+        if(list!=null && list.size()>0){//任务已经执行不能删除
+            if(flag!=null && "qz".equals(flag)){//强制删除
+                service.deleteDeployment(dpid,true); //这个方法不可 取 暂时 没 弄 出来 有待 完善
+                state = "已经清除相关启动的流程，并且取消部署!";
+            }else {
+                state = "该流程已经启动，不能撤回！";
+            }
+        }else{//执行 普通删除
+            service.deleteDeployment(dpid,true);//这个方法不可 取 暂时 没 弄 出来 有待 完善
+            state = "已经清除相关启动的流程，并且取消部署!";
         }
+       try {
+           PrintWriter out =  response.getWriter();
+           json.put("state", state);
+           out.print(json.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     /**
@@ -470,6 +726,9 @@ public class ActivitiController {
     @RequestMapping("clearAllData")
     public void clearAllData(HttpServletResponse response) {
 	/*
+
+
+
 		Task task = engine.getTaskService().createTaskQuery().taskId(taskId).singleResult();
 		TaskService service1=engine.getTaskService();
 		RuntimeService service2 = engine.getRuntimeService();
@@ -506,6 +765,40 @@ public class ActivitiController {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+
+
+
+    public int getDaiBanNum(String userid){
+        int num = 0;
+        //获取 代办数量
+        List<Task> list = engine.getTaskService().createTaskQuery().list();
+        if(list!=null){
+            for(Task task : list){
+               if(userid.equals(task.getAssignee())){
+                   num++;
+               }
+            }
+        }
+        return num;
+    }
+
+    /**
+     * 这里 查询的是 全部 已经 归档 的实际上 需要 查询 某 个人的
+     * @return
+     */
+    public int getFlowHistorynum(){
+        List<HistoricProcessInstance> flowHistoryList =  engine.getHistoryService().createHistoricProcessInstanceQuery().list();
+        int flowHistorynum = 0;
+        if(flowHistoryList!=null){//act_hi_procinst where END_TIME_ is not null
+            for(HistoricProcessInstance h : flowHistoryList){
+                if(h.getEndTime()!=null){
+                    flowHistorynum++;
+                }
+            }
+        }
+        return flowHistorynum;
     }
 
 }
