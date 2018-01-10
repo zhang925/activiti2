@@ -1,8 +1,13 @@
+bootstrap + SpringMVC + Heibernate + Mysql
 
 访问地址：
-
-
 http://localhost:8888/process
 
+http://localhost:8888/webpage/lcpage/home.jsp
+
 注意：静态资源 要放到 resources 目录下
+
+
+
+
 

@@ -465,6 +465,7 @@ public class ActivitiController {
      */
     @RequestMapping("completeTask")
     public void complete(HttpServletRequest request,HttpServletResponse response) {
+        Object obj = request.getParameterNames();
         TaskService service = engine.getTaskService();
         service.complete(request.getParameter("id"));
         JSONObject json = new JSONObject();
