@@ -11,6 +11,8 @@
         }
     </style>
 
+    <script src="/resources/flowjs/gener.js"></script>
+
     <script>
 
 
@@ -26,20 +28,26 @@
                     var appendHtml = "";
 
                     if(list){
-                        list.forEach(function (value) {
-                            var id = value.id;
-                            var pid = value.pid;
-                            var name = value.name;
-                            var createtime = value.createtime;
-                            appendHtml += " <tr><td>"+id+"</td>";
-                            appendHtml += " <td>"+pid+"</td>";
-                            appendHtml += " <td>"+name+"</td>";
-                            appendHtml += " <td>"+createtime+"</td>";
-                            appendHtml += " <td>";
-                            appendHtml += " <button type=\"button\" onclick=\"completeTask('"+id+"')\" class=\"btn btn-info\">完成任务</button>";
-                            appendHtml += " <button type=\"button\" onclick=\"tuxing('"+value.piid+"','"+name+"')\" class=\"btn btn-warning\">流程图</button>";
-                            appendHtml += " <button type=\"button\" onclick=\"dh('"+id+"','"+id+"')\" class=\"btn btn-danger\">打回</button>";
-                            appendHtml += " </td></tr>";
+
+                        list.forEach(function (dd) {
+                            var num = dd.num;//每个流程的要处理的任务数量
+                            var result = dd.result;
+                            result.forEach(function (value) {
+                                var id = value.id;
+                                var pid = value.pid;
+                                var name = value.name;
+                                var createtime = value.createtime;
+                                appendHtml += " <tr><td>"+id+"</td>";
+                                appendHtml += " <td>"+pid+"</td>";
+                                appendHtml += " <td>"+name+"</td>";
+                                appendHtml += " <td>"+createtime+"</td>";
+                                appendHtml += " <td>";
+                                appendHtml += " <button type=\"button\" onclick=\"generForm('"+id+"')\" class=\"btn btn-info\">处理任务</button>";
+                                appendHtml += " <button type=\"button\" onclick=\"tuxing('"+value.piid+"','"+name+"')\" class=\"btn btn-warning\">流程图</button>";
+                                appendHtml += " <button type=\"button\" onclick=\"dh('"+id+"','"+id+"')\" class=\"btn btn-danger\">打回</button>";
+                                appendHtml += " </td></tr>";
+                            });
+
                         });
                     }
 
@@ -50,7 +58,14 @@
         }
 
         function completeTask(id) { //完成任务
-            $.ajax({
+            //这里 要有 一个表单 去 完成
+            alert(123);
+
+           /* initFormLabel
+            initFormContent
+            initFormOk*/
+
+            /*$.ajax({
                 url:"activitiController/completeTask",
                 dataType:"json",
                 type:"POST",
@@ -63,7 +78,8 @@
                     window.parent.document.getElementById("flowHistoryIfame").contentWindow.loadFlowHistory();
                     alert(data.state);
                 }
-            })
+            })*/
+
         }
 
 
@@ -74,7 +90,7 @@
             graphicsIframe.setAttribute("height",( document.body.clientHeight / 2 )+"px");
             graphicsIframe.setAttribute("src",url);
             document.getElementById("myModalLabel").innerHTML = name+"图";
-            $("#tips").click();
+            $('#myModal').modal({keyboard: true});
         }
 
 
@@ -157,6 +173,26 @@
 </div>
 
 
+
+
+<!-- 动态 表单  -->
+<div class="modal fade" id="initForm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="initFormLabel"></h4>
+            </div>
+            <div class="modal-body" id="initFormContent">
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="initFormCancle" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" id="initFormOk"  class="btn btn-default">确定</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
 
 </body>
 </html>

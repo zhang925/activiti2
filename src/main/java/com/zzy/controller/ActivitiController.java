@@ -15,6 +15,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.zzy.service.UtilService;
 import com.zzy.util.Util_Diagrams;
 import org.activiti.engine.*;
+import org.activiti.engine.form.FormProperty;
+import org.activiti.engine.form.StartFormData;
 import org.activiti.engine.history.HistoricActivityInstance;
 import org.activiti.engine.history.HistoricProcessInstance;
 import org.activiti.engine.history.HistoricTaskInstance;
@@ -384,13 +386,22 @@ public class ActivitiController {
     }
 
     /**
-     * 部署流程
+     * 部署流程，需要报表单部署上
      */
     @RequestMapping("deploytask")
     public void deploytask(String processName, HttpServletResponse response) {
         RepositoryService service = engine.getRepositoryService();
         if (null != processName) {
-            service.createDeployment().addClasspathResource("diagrams/" + processName).deploy();
+            if(processName.equals("Bxsp.bpmn")){
+                service.createDeployment().addClasspathResource("diagrams/" + processName).deploy();
+            }else if(processName.equals("Hello.bpmn")){//请假表单
+                service.createDeployment().addClasspathResource("diagrams/" + processName)
+                        .addClasspathResource("form/qingjia.form")
+                        .addClasspathResource("form/qingjia_audit.form")
+                        .deploy();
+            }else{
+                service.createDeployment().addClasspathResource("diagrams/" + processName).deploy();
+            }
         }
         JSONObject json = new JSONObject();
         json.put("state", "success");
@@ -438,18 +449,44 @@ public class ActivitiController {
             }
         }
 
-        // json 不支持 转换 间接放到 Map  中去
         List listResult = new ArrayList();
-        for(Task task : list){
-            Map map = new HashMap();
-            map.put("id",task.getId());//任务ID
-            map.put("piid",task.getProcessInstanceId()); // 部署信息的ID
-            map.put("name",task.getAssignee()); // 任务执行人
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-            map.put("createtime",sdf.format(task.getCreateTime()));//任务创建时间
-            map.put("pid",task.getProcessDefinitionId());//流程ID
-            listResult.add(map);
+        //这里 要根据不同的流程进行分组。
+        //第一次 取出 流程的 name 或者 ID
+        List flowIDList = new ArrayList();
+        for(int i=0;i< list.size();i++){
+            Task task = list.get(i);
+            String flowID = task.getProcessDefinitionId();
+            if(!flowIDList.contains(flowID)){//流程ID
+                flowIDList.add(flowID);
+            }
         }
+        for(Object flowid : flowIDList){//分组
+            List temList = new ArrayList();
+            for(Task task : list){
+                String thisFlowId = task.getProcessDefinitionId();
+                if(thisFlowId.equals(flowid.toString())){
+                    // json 不支持 转换 间接放到 Map  中去
+                    Map map = new HashMap();
+                    map.put("id",task.getId());//任务ID
+                    ProcessDefinition p01 = engine.getRepositoryService().createProcessDefinitionQuery().processDefinitionId(thisFlowId).singleResult();
+                    map.put("pname",p01.getName()); // 流程名字
+                    map.put("piid",task.getProcessInstanceId()); // 部署信息的ID
+                    map.put("name",task.getAssignee()); // 任务执行人
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+                    map.put("createtime",sdf.format(task.getCreateTime()));//任务创建时间
+                    map.put("pid",task.getProcessDefinitionId());//流程ID
+                    temList.add(map);
+                }
+            }
+            //内部循环一次结束后
+            Map map2 = new HashMap();
+            map2.put("num",temList.size());
+            map2.put("result",temList);
+            listResult.add(map2);
+            temList = new ArrayList();//重置一次list
+        }
+
+
 
         JSONObject json = new JSONObject();
         json.put("list", listResult);
@@ -463,11 +500,65 @@ public class ActivitiController {
     /**
      * 完成任务
      */
+    @RequestMapping("initFormInfo")
+    public void initFormInfo(HttpServletRequest request,HttpServletResponse response) {
+        TaskService taskService = engine.getTaskService();
+        FormService formService= engine.getFormService();
+        String taskID = request.getParameter("id");//任务ID
+        Task task = taskService.createTaskQuery().taskId(taskID).singleResult();//获取任务实体
+        //获取流程实体
+        String flowID = task.getProcessDefinitionId();//流程ID
+        ProcessDefinition processDefinition = engine.getRepositoryService().createProcessDefinitionQuery()
+                .processDefinitionId(flowID).singleResult();
+        //获取流程的表单组件
+        //ProcessInstance processInstance = formService.submitStartFormData(processDefinition.getId(), formProperties);
+        boolean isHaveFormKey = processDefinition.hasStartFormKey();//判断是否有from
+        Object form = "";
+        if(isHaveFormKey){
+            StartFormData startFormData = formService.getStartFormData(flowID);
+            String formKey = startFormData.getFormKey();//表单的key
+            List<FormProperty> formProperties = startFormData.getFormProperties();
+            form = formService.getRenderedStartForm(flowID);
+            //Object obj2 = formService.getTaskFormKey(flowID,taskID);
+            //Object obj3 = formService.getRenderedTaskForm(taskID);
+            //Object obj4 = formService.getStartFormData(flowID);
+            //Object obj5 = formService.getStartFormKey(flowID);
+        }
+
+
+        Map map = new HashMap();
+        map.put("flowname",processDefinition.getName());//流程名字
+        map.put("nodename",task.getName());//当前节点
+        map.put("state","success");
+        map.put("form",form);
+
+        JSONObject json = new JSONObject();
+        json.put("result", map);
+        try {
+            response.getWriter().print(json.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
+     * 完成任务
+     */
     @RequestMapping("completeTask")
     public void complete(HttpServletRequest request,HttpServletResponse response) {
-        Object obj = request.getParameterNames();
+        //获取流程的表单组件
+        FormService formService= engine.getFormService();
+
+        //ProcessInstance processInstance = formService.submitStartFormData(processDefinition.getId(), formProperties);
+        //Task task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
+        Object obj1 = formService.getRenderedStartForm("");
+        //Object obj2 = formService.
+        Object renderedTaskForm = formService.getRenderedTaskForm("2524");
+
+
         TaskService service = engine.getTaskService();
-        service.complete(request.getParameter("id"));
+        //service.complete(request.getParameter("id"));
         JSONObject json = new JSONObject();
         json.put("state", "任务已经完成！");
         try {

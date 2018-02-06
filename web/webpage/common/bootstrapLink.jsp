@@ -17,6 +17,12 @@ String basePathBs = request.getScheme()+"://"+request.getServerName()+":"+reques
 	<script type="text/javascript" src="<%=basePathBs%>resources/bootstrap/js/jquery-1.9.1.js"></script>
 	<script src="<%=basePathBs%>resources/bootstrap/js/bootstrap.js" type="text/javascript"></script>
 
+
+	<!-- datetimepicker 控件 -->
+	<link rel="stylesheet" href="<%=basePathBs%>resources/bootstrap/datetimepicker/css/bootstrap-datetimepicker.min.css">
+	<script src="<%=basePathBs%>resources/bootstrap/datetimepicker/js/bootstrap-datetimepicker.js"></script>
+	<script src="<%=basePathBs%>resources/bootstrap/datetimepicker/js/bootstrap-datetimepicker.zh-CN.js"></script>
+
 </head>
 	<body>
 	</body>

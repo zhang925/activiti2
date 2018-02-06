@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:tns="http://www.activiti.org/testm1514430579615" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" expressionLanguage="http://www.w3.org/1999/XPath" id="m1514430579615" name="" targetNamespace="http://www.activiti.org/testm1514430579615" typeLanguage="http://www.w3.org/2001/XMLSchema">
   <process id="myProcess_1" isClosed="false" isExecutable="true" name="报销审批流程" processType="None">
-    <startEvent id="_start" name="StartEvent"/>
+    <startEvent activiti:formKey="qingjia.form" id="_start" name="StartEvent"/>
     <userTask activiti:assignee="小马哥" activiti:exclusive="true" activiti:formKey="form/qingjia.form" id="_txbd" name="初审"/>
-    <userTask activiti:assignee="老马" activiti:exclusive="true" id="_sjsh" name="复审"/>
+    <userTask activiti:assignee="老马" activiti:exclusive="true" activiti:formKey="qingjia_audit.form" id="_sjsh" name="复审"/>
     <endEvent id="_5" name="EndEvent"/>
     <sequenceFlow id="_6" name="填写表单" sourceRef="_start" targetRef="_txbd"/>
     <sequenceFlow id="_7" name="初审通过" sourceRef="_txbd" targetRef="_sjsh"/>
