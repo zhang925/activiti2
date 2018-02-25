@@ -1,0 +1,13 @@
+<form class="form-horizontal" role="form" id="ZZYFORM">
+    <div class="form-group">
+        <label for="YY">原因</label>
+        <textarea id="YY" name="YY" class="form-control" rows="3"></textarea>
+    </div>
+   
+    <hr/>
+    <div class="form-group">
+        <label for="SHYJ">审核意见：</label>
+        <textarea id="SHYJ" name="SHYJ" class="form-control" rows="3"></textarea>
+    </div>
+
+</form>

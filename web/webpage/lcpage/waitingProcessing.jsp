@@ -34,7 +34,7 @@
                             var result = dd.result;
                             result.forEach(function (value) {
                                 var id = value.id;
-                                var pid = value.pid;
+                                var pid = value.piid;
                                 var name = value.name;
                                 var createtime = value.createtime;
                                 appendHtml += " <tr><td>"+id+"</td>";
@@ -43,8 +43,8 @@
                                 appendHtml += " <td>"+createtime+"</td>";
                                 appendHtml += " <td>";
                                 appendHtml += " <button type=\"button\" onclick=\"generForm('"+id+"')\" class=\"btn btn-info\">处理任务</button>";
-                                appendHtml += " <button type=\"button\" onclick=\"tuxing('"+value.piid+"','"+name+"')\" class=\"btn btn-warning\">流程图</button>";
-                                appendHtml += " <button type=\"button\" onclick=\"dh('"+id+"','"+id+"')\" class=\"btn btn-danger\">打回</button>";
+                                appendHtml += " <button type=\"button\" onclick=\"tuxing('"+pid+"','"+name+"')\" class=\"btn btn-warning\">流程图</button>";
+                                appendHtml += " <button type=\"button\" onclick=\"dh('"+id+"','"+pid+"')\" class=\"btn btn-danger\">打回</button>";
                                 appendHtml += " </td></tr>";
                             });
 
@@ -57,28 +57,27 @@
             });
         }
 
-        function completeTask(id) { //完成任务
+        function completeTask(id,flowid) { //完成任务
             //这里 要有 一个表单 去 完成
-            alert(123);
-
-           /* initFormLabel
-            initFormContent
-            initFormOk*/
-
-            /*$.ajax({
+            //var formData = $("#ZZYFORM").serialize();//不好玩。暂时搁置
+            //自定义序列化。
+            var formData = ZZYserialize("ZZYFORM");
+            $.ajax({
                 url:"activitiController/completeTask",
                 dataType:"json",
                 type:"POST",
-                data:{"id":id},
+                data:{"id":id,"flowid":flowid,"form":formData},
                 async:false,
                 success:function (data) {
                     loadMyTaskList();
                     parent.shownum(); //调用 父级方法 刷新 任务数量
                     //刷新 历史 信息。
                     window.parent.document.getElementById("flowHistoryIfame").contentWindow.loadFlowHistory();
+                    $('#initForm').modal('hide');
                     alert(data.state);
+
                 }
-            })*/
+            })
 
         }
 
@@ -89,7 +88,7 @@
             graphicsIframe.setAttribute("width",(document.body.clientWidth)+"px");
             graphicsIframe.setAttribute("height",( document.body.clientHeight / 2 )+"px");
             graphicsIframe.setAttribute("src",url);
-            document.getElementById("myModalLabel").innerHTML = name+"图";
+            document.getElementById("myModalLabel").innerHTML = "当前处理人：" +name;
             $('#myModal').modal({keyboard: true});
         }
 
@@ -110,9 +109,34 @@
             })*/
         }
 
+        function ZZYserialize(formid) {
+            var form=document.getElementById(formid);
+                var len=form.elements.length;//表单字段长度;表单字段包括<input><select><button>等
+                var field=null;//用来存储每一条表单字段
+                var parts=[];//保存字符串将要创建的各个部分
+                //遍历每一个表单字段
+                for(var i=0;i<len;i++){
+                    field=form.elements[i];
+                    switch(field.type){
+                        case"submit":
+                        case"reset":
+                        case"button":
+                        case"radio":
+                        case"checkbox":
+                        default:
+                            if(field.name.length){
+                                parts.push(field.name+'=&'+field.value);
+                            }
+                            break;
+                    }
+                }
+                return parts.join("&=&");
+        }
+
         $(function () {
             loadMyTaskList();//加载数据
         });
+
 
     </script>
 </head>

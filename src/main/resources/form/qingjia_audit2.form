@@ -1,0 +1,30 @@
+<form class="form-horizontal" role="form" id="ZZYFORM">
+    <div class="form-group">
+        <label for="QJLX">请假类型</label>
+        <select class="form-control" id="QJLX" name="QJLX">
+            <option value="事假">事假</option>
+            <option value="病假">病假</option>
+            <option value="公休">公休</option>
+            <option value="调休">调休</option>
+            <option value="婚假">婚假</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="YY">原因</label>
+        <textarea id="YY" name="YY" class="form-control" rows="3"></textarea>
+    </div>
+    <div class="form-group">
+        <label for="KSSJ">开始时间</label>
+        <input  type="text" flag="datetime" id="KSSJ" name="KSSJ" >
+    </div>
+    <div class="form-group">
+        <label for="JSSJ">结束时间</label>
+        <input  type="text" flag="datetime" id="JSSJ" name="JSSJ" >
+    </div>
+    <hr/>
+    <div class="form-group">
+        <label for="SHYJ">审核意见：</label>
+        <textarea id="SHYJ" name="SHYJ" class="form-control" rows="3"></textarea>
+    </div>
+
+</form>

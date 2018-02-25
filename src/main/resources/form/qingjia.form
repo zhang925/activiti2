@@ -1,4 +1,4 @@
-<form class="form-horizontal" role="form">
+<form class="form-horizontal" role="form" id="ZZYFORM">
     <div class="form-group">
         <label for="QJLX">请假类型</label>
         <select class="form-control" id="QJLX" name="QJLX">
@@ -21,4 +21,10 @@
         <label for="JSSJ">结束时间</label>
         <input  type="text" flag="datetime" id="JSSJ" name="JSSJ" >
     </div>
+    <hr/>
+    <div class="form-group">
+        <label for="SHYJ">审核意见：</label>
+        <textarea id="SHYJ" name="SHYJ" class="form-control" rows="3"></textarea>
+    </div>
+
 </form>

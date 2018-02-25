@@ -393,7 +393,9 @@ public class ActivitiController {
         RepositoryService service = engine.getRepositoryService();
         if (null != processName) {
             if(processName.equals("Bxsp.bpmn")){
-                service.createDeployment().addClasspathResource("diagrams/" + processName).deploy();
+                service.createDeployment().addClasspathResource("diagrams/" + processName)
+                        .addClasspathResource("form/bxsp.form")
+                        .deploy();
             }else if(processName.equals("Hello.bpmn")){//请假表单
                 service.createDeployment().addClasspathResource("diagrams/" + processName)
                         .addClasspathResource("form/qingjia.form")
@@ -514,23 +516,37 @@ public class ActivitiController {
         //ProcessInstance processInstance = formService.submitStartFormData(processDefinition.getId(), formProperties);
         boolean isHaveFormKey = processDefinition.hasStartFormKey();//判断是否有from
         Object form = "";
+        List formData = new ArrayList();
         if(isHaveFormKey){
-            StartFormData startFormData = formService.getStartFormData(flowID);
-            String formKey = startFormData.getFormKey();//表单的key
-            List<FormProperty> formProperties = startFormData.getFormProperties();
+            //StartFormData startFormData = formService.getStartFormData(flowID);
+            //String formKey = startFormData.getFormKey();//表单的key
+            //List<FormProperty> formProperties = startFormData.getFormProperties();
             form = formService.getRenderedStartForm(flowID);
-            //Object obj2 = formService.getTaskFormKey(flowID,taskID);
-            //Object obj3 = formService.getRenderedTaskForm(taskID);
-            //Object obj4 = formService.getStartFormData(flowID);
-            //Object obj5 = formService.getStartFormKey(flowID);
+
+            //查看到那个节点了。
+           /* String delployid = task.getExecutionId();
+            String sql = "select REV_ from act_ru_execution WHERE ID_="+delployid ;
+            List list = utilService.getListBySql(sql);
+            Object nodeNum = "1";
+            if(list!=null && list.size()>0){
+                nodeNum = list.get(0);
+            }*/
+
+            //首先判断是否 有之前的数据
+            String tableName = "a_oa_leave";//根据自己的配置文件读取相应的table名字,这里不做处理，只有一个。
+            String existSql = "SELECT * FROM "+tableName+" WHERE TASK_ID='"+taskID+"' AND PRO_ID = '"+flowID+"'";
+            formData = utilService.getListBySql(existSql);
+
         }
 
 
         Map map = new HashMap();
+        map.put("flowid",processDefinition.getId());//流程名字
         map.put("flowname",processDefinition.getName());//流程名字
         map.put("nodename",task.getName());//当前节点
         map.put("state","success");
         map.put("form",form);
+        map.put("formData",formData);
 
         JSONObject json = new JSONObject();
         json.put("result", map);
@@ -547,18 +563,54 @@ public class ActivitiController {
      */
     @RequestMapping("completeTask")
     public void complete(HttpServletRequest request,HttpServletResponse response) {
-        //获取流程的表单组件
         FormService formService= engine.getFormService();
-
+        TaskService service = engine.getTaskService();
+        //获取流程的表单组件
+        String flowid = request.getParameter("flowid");//流程ID
+        String taskid = request.getParameter("id");//任务ID
+        String formData = request.getParameter("form");//表单信息
+        String loginUser = "当前登陆人待定";//当前登陆人,这里暂时没有做，固定一个数值
+        String loginUserID = "loginUserID001";//当前登陆人,这里暂时没有做，固定一个数值
         //ProcessInstance processInstance = formService.submitStartFormData(processDefinition.getId(), formProperties);
         //Task task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
-        Object obj1 = formService.getRenderedStartForm("");
-        //Object obj2 = formService.
-        Object renderedTaskForm = formService.getRenderedTaskForm("2524");
+        //Object renderedTaskForm = formService.getRenderedTaskForm(taskid);//根据taskid 能获取对应表单 内容 不含 值
+        String tableName = "a_oa_leave";//根据自己的配置文件读取相应的table名字,这里不做处理，只有一个。
+        String executeSql  = "";
+        String paramNames = "(";
+        String paramValues = "(";
+        if(formData!=null && formData!=""){
+            //首先判断是否 有之前的数据
+            String existSql = "SELECT * FROM "+tableName+" WHERE TASK_ID='"+taskid+"' AND PRO_ID = '"+flowid+"'";
+            List list = utilService.getListBySql(existSql);
 
-
-        TaskService service = engine.getTaskService();
-        //service.complete(request.getParameter("id"));
+            String dataArr[] = formData.split("&=&");
+            for(int i=0;i<dataArr.length;i++){
+                String param = dataArr[i];
+                String paremArr[] = param.split("=&");
+                String paramName = paremArr[0];//参数名
+                String paramValue = "";
+                if(paremArr.length == 2){
+                    paramValue = paremArr[1];//参数值
+                }
+                if(list!=null && list.size()>0){
+                    executeSql += paramName+"="+"'"+paramValue+"',";
+                }else{
+                    paramNames += ""+paramName+",";
+                    paramValues += "'"+paramValue+"',";
+                }
+            }
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+            String newDate = sdf.format(new Date());
+            if(list!=null && list.size()>0){//存在，修改
+                executeSql = "UPDATE "+ tableName + " SET " + executeSql +" UPDATE_TIME ='"+newDate+"' WHERE TASK_ID='"+taskid+"' AND PRO_ID = '"+flowid+"'";
+            }else{//插入
+                paramNames +="TASK_ID,PRO_ID,USER,USER_ID,CREATE_TIME)";
+                paramValues += "'"+taskid+"','"+flowid+"','"+loginUser+"','"+loginUserID+"','"+newDate+"')";
+                executeSql = "INSERT INTO "+ tableName + paramNames + " VALUES "+paramValues;
+            }
+            utilService.executeSql(executeSql);//执行插入或者修改操作
+        }
+        service.complete(taskid);
         JSONObject json = new JSONObject();
         json.put("state", "任务已经完成！");
         try {
@@ -599,43 +651,6 @@ public class ActivitiController {
             state = "要驳回的节点不存在！";
         }
 
-        //engine.getManagementService().executeCommand(new JumpActivityCmd(activityId, instanceId)) ; //managerService activiti 七大服务之一
-/*import org.activiti.engine.impl.interceptor.Command;
-import org.activiti.engine.impl.interceptor.CommandContext;
-import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
-import org.activiti.engine.impl.pvm.process.ActivityImpl;
-import org.activiti.engine.impl.pvm.process.ProcessDefinitionImpl;
-
-
-        public class JumpActivityCmd implements Command<Object> {
-
-            private String activityId;
-            private String processInstanceId;
-            private String jumpOrigin;
-
-
-            public JumpActivityCmd(String activityId, String processInstanceId,String jumpOrigin) {
-                this.activityId = activityId;
-                this.processInstanceId = processInstanceId;
-                this.jumpOrigin = jumpOrigin;
-            }
-
-            public JumpActivityCmd(String activityId, String processInstanceId) {
-                this(activityId,processInstanceId,"jump");
-            }
-
-
-            public Object execute(CommandContext commandContext) {
-                ExecutionEntity executionEntity = commandContext.getExecutionEntityManager().findExecutionById(processInstanceId);
-                executionEntity.destroyScope(jumpOrigin);
-                ProcessDefinitionImpl processDefinition = executionEntity.getProcessDefinition();
-                ActivityImpl activity = processDefinition.findActivity(activityId);
-                executionEntity.executeActivity(activity);
-                return executionEntity;
-            }
-
-
-        }*/
 
         JSONObject json = new JSONObject();
         json.put("state", "已经撤回！");
