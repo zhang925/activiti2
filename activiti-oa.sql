@@ -20,7 +20,7 @@ SET FOREIGN_KEY_CHECKS=0;
 -- ----------------------------
 DROP TABLE IF EXISTS `a_oa_leave`;
 CREATE TABLE `a_oa_leave` (
-  `id` int(11) NOT NULL,
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `TASK_ID` varchar(100) DEFAULT NULL,
   `PRO_ID` varchar(100) DEFAULT NULL,
   `USER` varchar(255) DEFAULT NULL,
@@ -28,8 +28,14 @@ CREATE TABLE `a_oa_leave` (
   `CREATE_TIME` varchar(100) DEFAULT NULL,
   `CONTENT` varchar(255) DEFAULT NULL,
   `TITLE` varchar(255) DEFAULT NULL,
+  `QJLX` varchar(255) DEFAULT NULL,
+  `YY` varchar(255) DEFAULT NULL,
+  `KSSJ` varchar(255) DEFAULT NULL,
+  `JSSJ` varchar(255) DEFAULT NULL,
+  `SHYJ` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+
 
 -- ----------------------------
 -- Records of a_oa_leave
