@@ -21,6 +21,19 @@
 		<param-name>log4jRefreshInterval</param-name>
 		<param-value>6000</param-value>
 	</context-param>
+
+	<!-- sebservice 的权限 拦截器 -->
+	<filter>
+		<filter-name>dispatcherDemoFilter</filter-name>
+		<filter-class>com.zzy.controller.CORSFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>dispatcherDemoFilter</filter-name>
+		<url-pattern>/api/*</url-pattern>
+	</filter-mapping>
+
+
+
 	<!-- Spring Log4J config -->
 	<listener>
 		<listener-class>org.springframework.web.util.Log4jConfigListener</listener-class>
