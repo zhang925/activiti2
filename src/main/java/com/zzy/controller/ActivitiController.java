@@ -25,6 +25,7 @@ import org.activiti.engine.impl.cmd.GetDeploymentProcessDiagramCmd;
 import org.activiti.engine.impl.interceptor.Command;
 import org.activiti.engine.impl.persistence.entity.HistoricProcessInstanceEntity;
 import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity;
+import org.activiti.engine.impl.pvm.ReadOnlyProcessDefinition;
 import org.activiti.engine.impl.pvm.process.ActivityImpl;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.ProcessInstance;
@@ -853,13 +854,13 @@ public class ActivitiController {
 		*/
 	    //后期 可以把 这个 删除 语句 放到 存储 过程去,直接调用 一个sql就行了
         String tables[] = {
-                "act_ge_bytearray","act_hi_actinst","act_hi_comment",
-                "act_hi_detail","act_hi_identitylink","act_hi_procinst",
-                "act_hi_taskinst","act_hi_varinst","act_re_deployment",
-                "act_re_model","act_ru_identitylink","act_ru_event_subscr",
-                "act_ru_identitylink","act_ru_variable","act_ru_job",
-                "act_ru_task","act_ru_execution","act_re_procdef",
-                "act_hi_attachment"
+                    "act_ge_bytearray","act_hi_actinst","act_hi_comment",
+                    "act_hi_detail","act_hi_identitylink","act_hi_procinst",
+                    "act_hi_taskinst","act_hi_varinst","act_re_deployment",
+                    "act_re_model","act_ru_identitylink","act_ru_event_subscr",
+                    "act_ru_identitylink","act_ru_variable","act_ru_job",
+                    "act_ru_task","act_ru_execution","act_re_procdef",
+                    "act_hi_attachment"
         };
         for(String table : tables){
             String sql ="DELETE FROM " + table ;
@@ -907,5 +908,28 @@ public class ActivitiController {
         }
         return flowHistorynum;
     }
+
+
+/*
+    public RepositoryService repositoryService;
+
+    public String test(String taskId,String destinationTaskId){//新的退回
+
+
+
+        TaskService taskService = engine.getTaskService() ;
+        Task task = taskService.createTaskQuery().taskId(Arrays.asList(taskId.split(",")).get(0)).singleResult();
+        String executionId = task.getExecutionId();
+        String lcdyId = task.getProcessDefinitionId();
+        //String processTaskId = task.getId();//当前节点id
+        String processTaskId = task.getTaskDefinitionKey();
+
+        ReadOnlyProcessDefinition processDefinitionEntity = (ReadOnlyProcessDefinition) repositoryService.getProcessDefinition(lcdyId);
+        ActivityImpl destinationActivity = (ActivityImpl) processDefinitionEntity.findActivity(destinationTaskId);//目标节点
+        ActivityImpl currentActivity = (ActivityImpl)processDefinitionEntity.findActivity(processTaskId);//当前节点
+        engine.getManagementService().executeCommand(new JumpTaskCmd(executionId,destinationActivity,currentActivity));
+
+        return destinationTaskId;
+    }*/
 
 }

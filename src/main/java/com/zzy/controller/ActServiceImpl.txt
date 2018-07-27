@@ -1,0 +1,403 @@
+package com.zzy.controller;
+
+import com.aisino.core.server.BaseService;
+import com.aisino.tools.util.Assert;
+import com.aisino.tools.util.StringUtils;
+import com.sti.platform.dao.ActDao;
+import com.sti.platform.model.Audit;
+import com.sti.platform.model.FlowNode;
+import com.sti.platform.model.ParmAct;
+import com.sti.platform.model.act.TaskInfo;
+import com.sti.platform.service.ActService;
+import com.sti.platform.service.UserService;
+import com.sti.platform.util.ActUtil;
+import org.activiti.engine.*;
+import org.activiti.engine.impl.RepositoryServiceImpl;
+import org.activiti.engine.impl.context.Context;
+import org.activiti.engine.impl.interceptor.Command;
+import org.activiti.engine.impl.interceptor.CommandContext;
+import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
+import org.activiti.engine.impl.persistence.entity.ExecutionEntityManager;
+import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity;
+import org.activiti.engine.impl.persistence.entity.TaskEntity;
+import org.activiti.engine.impl.pvm.PvmActivity;
+import org.activiti.engine.impl.pvm.PvmTransition;
+import org.activiti.engine.impl.pvm.ReadOnlyProcessDefinition;
+import org.activiti.engine.impl.pvm.process.ActivityImpl;
+import org.activiti.engine.repository.DeploymentBuilder;
+import org.activiti.engine.runtime.ProcessInstance;
+import org.activiti.engine.task.Task;
+import org.apache.commons.collections.MapUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
+
+
+@Service("actService")
+public class ActServiceImpl extends BaseService implements ActService {
+
+	@Autowired
+	private ActDao actDao;
+	@Autowired
+	private ProcessEngine processEngine;
+	
+	@Autowired
+	private RepositoryService repositoryService;
+	@Autowired
+	private RepositoryServiceImpl repositoryServiceImpl;
+	@Autowired
+	private RuntimeService runtimeService;
+	@Autowired
+	private FormService formService;
+	@Autowired
+	private IdentityService identityService;
+	@Autowired
+	private TaskService taskService;
+	@Autowired
+	private HistoryService historyService;
+	@Autowired
+	private ManagementService managementService;
+	@Autowired
+	private UserService userService;
+	
+	@Override
+	public void createDeployment(){
+		
+		DeploymentBuilder build=repositoryService.createDeployment();
+	//	build.addZipInputStream(paramZipInputStream)
+		build.addClasspathResource("MyProcess.bpmn");
+		build.deploy();
+		
+	}
+
+
+	public String version(){
+		return ProcessEngine.VERSION;
+	}
+	
+
+/*	public String createProcessInstanceByKey(Map<String, Object> map) {
+		ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("leave", businessKey, variables);
+        String processInstanceId = processInstance.getId();
+		
+	
+		return processInstanceId;
+	}*/
+
+	@Override
+	public String createProcessInstance(Map<String, Object> map, String processKey) {
+		Map<String,Object> pd = ActUtil.getProcessDefinitionInfo(processKey,repositoryServiceImpl);
+		if(pd.isEmpty()){return null;}
+		String pdId = MapUtils.getString(pd, "pdId");
+
+		//获取全部环节。为流程环节动态添加处理
+		List<Map<String, Object>> activities = ActUtil.getCandidateUserExpressions(pdId,repositoryServiceImpl);
+		for (Map<String, Object> activity : activities){
+			@SuppressWarnings("unchecked")
+            List<String> candidates = (List<String>) activity.get("candidates");
+			if (candidates.isEmpty()){continue;}
+			for(String cand :candidates){// 3.获取对应角色的人员
+				List<String> userIdList = userService.getIdByRoleCode(cand);
+				String userIds = "";
+				for(int i=0;i<userIdList.size();i++){
+					userIds+=userIdList.get(i);
+					if(i<userIdList.size()-1){
+						userIds+=",";
+					}
+				}
+				map.put(cand, userIds);
+			}
+		}
+		String processInstanceId = ActUtil.createProcessInstance(map,pdId,runtimeService);//启动流程
+		return processInstanceId;
+	}
+
+	@Override
+	public List<Map<String, Object>> findTask(String userId, String bussinssType) {
+		List<Map<String,Object>> result = new ArrayList<Map<String,Object>>();
+		List<Task> tasks = ActUtil.queryTask(userId,bussinssType,taskService);
+		for(Task task :tasks){
+			Map<String,Object> map = new HashMap<String,Object>();
+			String taskName = task.getName();
+			String taskId = task.getId();
+			String processInstanceId = task.getProcessInstanceId();
+			map.put("taskName", taskName);
+			map.put("taskId", taskId);
+			map.put("processInstanceId", processInstanceId);
+			result.add(map);
+		}
+		return result;
+	}
+	
+	public TaskInfo getCurrentTask(String procInsId){
+		Task curTasks = taskService.createTaskQuery().processInstanceId(procInsId).active().singleResult();
+		TaskInfo taskInfo=new TaskInfo(curTasks.getProcessDefinitionId(),curTasks.getId(),curTasks.getName(),curTasks.getTaskDefinitionKey());
+		
+		return taskInfo;
+		
+	}
+	
+	@Override
+	public Task getNextTask(String procInsId, String userId){
+		Task task = taskService.createTaskQuery()
+				.taskCandidateOrAssigned(userId)
+				.processInstanceId(procInsId)
+				.orderByTaskCreateTime().asc().singleResult();
+		return task;
+		
+	}
+	
+	@Override
+	public void commit(String procInsId, String userId){
+		TaskInfo t=this.getCurrentTask(procInsId);
+		String task = t.getTaskId();
+		Map<String, Object> map = new HashMap<>();
+		this.complete(task,map);
+		
+	}
+	
+	public void complete(String taskId, Map<String, Object> variables){
+		taskService.complete(taskId, variables);
+	}
+	
+	@Override
+	public void complete(String taskId, ParmAct parmAct){
+		Map<String, Object> variables=new HashMap<>();
+		Assert.isTrue(StringUtils.hasText(taskId));
+		
+		if(StringUtils.hasText(parmAct.getUser())){//审核人
+			variables.put("user", parmAct.getUser());
+		}
+		if(StringUtils.hasText(parmAct.getLinkurl())){//连接地址
+			variables.put("linkurl", parmAct.getLinkurl());
+		}
+		if(StringUtils.hasText(parmAct.getOpinion())){//审核意见
+			variables.put("opinion", parmAct.getOpinion());
+		}
+		if(StringUtils.hasText(parmAct.getApprove())){//审核结果
+			variables.put("approve",parmAct.getApprove());
+		}else{
+			variables.put("approve","yes");
+		}
+		String[] experts = parmAct.getExperts();
+		if(experts != null && experts.length>0){//专家
+			variables.put("experts", experts);
+		}
+		if(StringUtils.hasText(parmAct.getOther())){//其他
+			variables.put("other", parmAct.getOther());
+		}
+		this.complete(taskId, variables);
+	}
+	
+	
+	@Override
+	public void saveCompleteTask(String taskId, Map<String, Object> map) {
+		ActUtil.completeTask(taskId,map, taskService);
+	}
+	
+	
+	@Override
+	@Deprecated
+	public String updateTaskRoll(String taskId, String destinationTaskId) {
+		Task task = taskService.createTaskQuery().taskId(Arrays.asList(taskId.split(",")).get(0)).singleResult();
+		String executionId = task.getExecutionId();
+		String lcdyId = task.getProcessDefinitionId();
+		//String processTaskId = task.getId();//当前节点id
+		String processTaskId = task.getTaskDefinitionKey();
+		
+		ReadOnlyProcessDefinition processDefinitionEntity = (ReadOnlyProcessDefinition) repositoryService.getProcessDefinition(lcdyId);
+		ActivityImpl destinationActivity = (ActivityImpl) processDefinitionEntity.findActivity(destinationTaskId);//目标节点
+	    ActivityImpl currentActivity = (ActivityImpl)processDefinitionEntity.findActivity(processTaskId);//当前节点
+	    processEngine.getManagementService().executeCommand(new JumpTaskCmd(executionId,destinationActivity,currentActivity)); 
+		
+		return destinationTaskId;
+	}
+
+	@Override
+	public List<Map<String, Object>> findFlowNodeInfo(String processInstanceId,
+                                                      String actId){
+		List<Map<String, Object>> list = actDao.findFlowNodeInfo(processInstanceId, actId);
+		for(Map<String, Object> liMap :list){
+			String file = MapUtils.getString(liMap, "linkurl");
+			String fileId = file.substring(0,32);
+			String fileName = file.substring(33,file.length()-1);
+			liMap.put("fileId", fileId);
+			liMap.put("fileName", fileName);
+		}
+		return list;
+	}
+	
+	
+	@Override
+	public boolean isBreach(String procInsId){
+		
+		ExecutionEntity execution = (ExecutionEntity) runtimeService.createProcessInstanceQuery()
+				.processInstanceId(procInsId).singleResult();
+		ProcessDefinitionEntity def = (ProcessDefinitionEntity) repositoryServiceImpl.getDeployedProcessDefinition(execution.getProcessDefinitionId());
+		
+		ProcessInstance pi=runtimeService.createProcessInstanceQuery() // 根据流程实例id获取流程实例
+                .processInstanceId(procInsId)
+                .singleResult();
+        ActivityImpl activityImpl=def.findActivity(pi.getActivityId()); // 根据活动id获取活动实例
+        if(activityImpl == null){return false;}
+        List<PvmTransition> outTransitions = activityImpl.getOutgoingTransitions();//获取从某个节点出来的所有线路
+        for(PvmTransition tr:outTransitions){
+			PvmActivity ac = tr.getDestination(); //获取线路的终点节点
+			if("exclusiveGateway".equals(ac.getProperty("type"))){ //是网关
+				List<PvmTransition> outTransitionsTemp = ac.getOutgoingTransitions();
+				if(outTransitionsTemp.size() > 1){//网关后有多条连线
+					return true;
+				} else {
+					return false;
+				}
+			} else if("userTask".equals(ac.getProperty("type"))){ //是任务节点
+				return false;
+			}
+		}
+		return false;
+	}
+	
+	@Override
+	public List<Audit> findAudit(String flowId, String user) {
+		return actDao.queryAudit(flowId, user);
+	}
+
+	@Override
+	public List<FlowNode> findFlowNode(String processInstanceId) {
+		
+		Assert.isTrue(StringUtils.hasText(processInstanceId), "流程实例ID不能为空");
+		
+		return actDao.findFlowNode(processInstanceId);
+	}
+	
+	
+	@Override
+	public List<FlowNode> findFlowNodeAndAudit(String processInstanceId) {
+		Assert.isTrue(StringUtils.hasText(processInstanceId), "流程实例ID不能为空");
+		
+		List<FlowNode> flowNodes=actDao.findFlowNode(processInstanceId);
+		List<FlowNode> nodes=new ArrayList<>();
+		for(FlowNode flowNode:flowNodes){
+			flowNode.setAudits(this.findAuditInfo(flowNode.getId()));
+			nodes.add(flowNode);
+		}
+		return nodes;
+	}
+	
+	@Override
+	public List<FlowNode> findFlowNode(String processInstanceId,
+                                       String nextTaskId) {
+		return actDao.findFlowNode(processInstanceId, nextTaskId);
+	}
+	
+	@Override
+	public List<Audit> findAuditInfo(String flowNodeId){
+		return actDao.queryAuditInfo(flowNodeId);
+	}
+	
+	public class JumpTaskCmd implements Command<Void> {
+		private String executionId;
+		private ActivityImpl desActivity;
+		private Map<String, Object> paramvar;
+		private ActivityImpl currentActivity;
+		
+		public Void execute(CommandContext commandContext) {
+			ExecutionEntityManager executionEntityManager = Context.getCommandContext().getExecutionEntityManager();
+			// 获取当前流程的executionId，因为在并发的情况下executionId是唯一的。  
+			ExecutionEntity executionEntity = executionEntityManager.findExecutionById(executionId);
+			executionEntity.setVariables(paramvar);  
+			executionEntity.setEventSource(this.currentActivity);  
+			executionEntity.setActivity(this.currentActivity);  
+			// 根据executionId 获取Task  
+			Iterator<TaskEntity> localIterator = Context.getCommandContext().getTaskEntityManager()
+			.findTasksByExecutionId(this.executionId).iterator();  
+			   
+			while (localIterator.hasNext()) {  
+				TaskEntity taskEntity = (TaskEntity) localIterator.next();
+				// 触发任务监听  
+				//taskEntity.fireEvent("complete");  
+				// 删除任务的原因  
+				Context.getCommandContext().getTaskEntityManager().deleteTask(taskEntity, "completed", false);
+			}  
+			executionEntity.executeActivity(this.desActivity);  
+			return null;  
+		}  
+		   
+		/** 
+		 * 构造参数 可以根据自己的业务需要添加更多的字段 
+		 * @param executionId 
+		 * @param desActivity 
+		 * @param currentActivity
+		 */  
+		public JumpTaskCmd(String executionId, ActivityImpl desActivity,
+                           ActivityImpl currentActivity) {
+			this.executionId = executionId;  
+			this.desActivity = desActivity;  
+			this.currentActivity = currentActivity;  
+		}  
+	}
+	
+	@Override
+	public void delectProcessInstance(String processInstanceId){
+		if(StringUtils.notText(processInstanceId)){return ;}
+		ActUtil.deleteProcessInstance(processInstanceId, taskService, runtimeService, historyService);
+	}
+	
+	
+	@Override
+	public void saveAudit(Audit audit){
+		super.save(audit);
+		
+	}
+	
+	
+	@Override
+	public void saveFlowNode(FlowNode flowNode){
+		super.save(flowNode);
+		
+	}
+
+	@Override
+	public Map<String, Object> queryNextActivity(String taskId) {
+		Map<String, Object> result = new HashMap<>();
+    	Task task=taskService.createTaskQuery() // 创建任务查询
+                .taskId(taskId) // 根据任务id查询
+                .singleResult(); 
+        String processDefinitionId=task.getProcessDefinitionId(); // 获取流程定义id
+        ProcessDefinitionEntity processDefinitionEntity=(ProcessDefinitionEntity) repositoryService.getProcessDefinition(processDefinitionId);
+        String processInstanceId=task.getProcessInstanceId(); // 获取流程实例id
+        ProcessInstance pi=runtimeService.createProcessInstanceQuery() // 根据流程实例id获取流程实例
+                .processInstanceId(processInstanceId)
+                .singleResult();
+        ActivityImpl activityImpl=processDefinitionEntity.findActivity(pi.getActivityId()); // 根据活动id获取活动实例
+        if(activityImpl == null){return result;}
+        List<PvmTransition> outTransitions = activityImpl.getOutgoingTransitions();//获取从某个节点出来的所有线路
+        for(PvmTransition tr:outTransitions){
+			PvmActivity ac = tr.getDestination(); //获取线路的终点节点
+			ActivityImpl activity = (ActivityImpl) ac.getActivities();
+			result.put("nextTaskName", ac.getProperty("name"));
+			result.put("nextTaskId", ac.getId());
+		}
+        return result;
+	}
+
+
+	@Override
+	public String getCurrentActivitiId(String processInstanceId) {
+		return ActUtil.getCurrentActivitiId(processInstanceId, taskService);
+	}
+
+
+	@Override
+	public String getCurrentActivitiName(String processInstanceId) {
+		return ActUtil.getCurrentActivitiName(processInstanceId, taskService);
+	}
+
+
+
+	/*@Override
+	public TaskInfo getCurrentTask(String procInsId) {
+		return null;
+	}*/
+}
