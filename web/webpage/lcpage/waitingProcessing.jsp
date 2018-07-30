@@ -111,6 +111,9 @@
 
         function ZZYserialize(formid) {
             var form=document.getElementById(formid);
+            if(!form){
+                return "";
+            }
                 var len=form.elements.length;//表单字段长度;表单字段包括<input><select><button>等
                 var field=null;//用来存储每一条表单字段
                 var parts=[];//保存字符串将要创建的各个部分

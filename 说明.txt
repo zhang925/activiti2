@@ -7,7 +7,21 @@ http://localhost:8888/webpage/lcpage/home.jsp
 
 注意：静态资源 要放到 resources 目录下123
 
+activiti 的节点ID不能是纯数字，要符合java命名规范 不然会出现 '1' 不是 'NCName' 的有效值。
 
+
+	Task task = taskService.createTaskQuery().taskId(Arrays.asList(taskId.split(",")).get(0)).singleResult();
+		String executionId = task.getExecutionId();
+		String lcdyId = task.getProcessDefinitionId();
+		//String processTaskId = task.getId();//当前节点id
+		String processTaskId = task.getTaskDefinitionKey();
+
+		ReadOnlyProcessDefinition processDefinitionEntity = (ReadOnlyProcessDefinition) repositoryService.getProcessDefinition(lcdyId);
+		ActivityImpl destinationActivity = (ActivityImpl) processDefinitionEntity.findActivity(destinationTaskId);//目标节点
+	    ActivityImpl currentActivity = (ActivityImpl)processDefinitionEntity.findActivity(processTaskId);//当前节点
+	    processEngine.getManagementService().executeCommand(new JumpTaskCmd(executionId,destinationActivity,currentActivity));
+
+		return destinationTaskId;
 
 
 

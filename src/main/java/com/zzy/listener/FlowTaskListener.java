@@ -1,14 +1,16 @@
 package com.zzy.listener;
 
 import org.activiti.engine.delegate.DelegateExecution;
+import org.activiti.engine.delegate.DelegateTask;
 import org.activiti.engine.delegate.JavaDelegate;
+import org.activiti.engine.delegate.TaskListener;
 import org.springframework.util.Assert;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class FlowTaskListener implements JavaDelegate {
+public class FlowTaskListener implements TaskListener { //JavaDelegate
 
     public void execute(DelegateExecution execution) throws Exception {
         String[] experts = (String[]) execution.getVariable("experts");
@@ -22,5 +24,9 @@ public class FlowTaskListener implements JavaDelegate {
         	list.add("0");
         }
         execution.setVariable("pers", list);  
-    }  
-}  
+    }
+
+    public void notify(DelegateTask delegateTask) {
+        System.out.println(123456);
+    }
+}

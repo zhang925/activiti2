@@ -391,6 +391,8 @@ public class ActivitiController {
      */
     @RequestMapping("deploytask")
     public void deploytask(String processName, HttpServletResponse response) {
+        //要判断，是否已经部署，如果已经部署， 部署的流程是否已经结束， 删除还是保留，都是问题
+
         RepositoryService service = engine.getRepositoryService();
         if (null != processName) {
             if(processName.equals("Bxsp.bpmn")){
