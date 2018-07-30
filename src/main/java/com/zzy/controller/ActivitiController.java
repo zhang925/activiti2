@@ -624,14 +624,15 @@ public class ActivitiController {
     }
 
     /**
-     * 撤回任务节点
+     * 撤回任务节点,退回
      * @param request
      * @param response
      */
     @RequestMapping("revokeTask")
     public void revokeTask(HttpServletRequest request,HttpServletResponse response){
-        String taskId = request.getParameter("request");
-        String activityId = request.getParameter("activityId");
+        String taskId = request.getParameter("id");//任务ID
+        String flowId = request.getParameter("pid");//流程ID
+        String activityId = request.getParameter("backId");//退回的目标节点ID
         String state = "";
         HistoricTaskInstance historicTaskInstance = engine.getHistoryService().createHistoricTaskInstanceQuery()
                 .taskId(taskId).finished().singleResult();

@@ -94,9 +94,8 @@
 
 
         function dh(id,pid) {// 打回
-            alert("正在开发中!");
-           /* $.ajax({
-                url:"activitiController/delStarted",
+           $.ajax({
+                url:"activitiController/revokeTask",
                 dataType:"json",
                 type:"POST",
                 data:{"id":id,"pid":pid},
@@ -106,7 +105,7 @@
                     parent.shownum(); //调用 父级方法 刷新 任务数量
                     alert(data.state);
                 }
-            })*/
+            })
         }
 
         function ZZYserialize(formid) {
