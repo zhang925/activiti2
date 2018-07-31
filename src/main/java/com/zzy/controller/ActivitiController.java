@@ -691,8 +691,7 @@ public class ActivitiController {
         Task task = taskService.createTaskQuery().taskId(Arrays.asList(taskId.split(",")).get(0)).singleResult();
         String executionId = task.getExecutionId();
         String lcdyId = task.getProcessDefinitionId();
-        //String processTaskId = task.getId();//当前节点id
-        String processTaskId = task.getTaskDefinitionKey();
+        String processTaskId = task.getTaskDefinitionKey();//当前节点id
         RepositoryService repositoryService = engine.getRepositoryService();
         ReadOnlyProcessDefinition processDefinitionEntity = (ReadOnlyProcessDefinition) repositoryService.getProcessDefinition(lcdyId);
         ActivityImpl destinationActivity = (ActivityImpl) processDefinitionEntity.findActivity(activityId);//目标节点
