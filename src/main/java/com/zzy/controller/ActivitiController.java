@@ -22,9 +22,10 @@ import org.activiti.engine.history.HistoricProcessInstance;
 import org.activiti.engine.history.HistoricTaskInstance;
 import org.activiti.engine.impl.RepositoryServiceImpl;
 import org.activiti.engine.impl.cmd.GetDeploymentProcessDiagramCmd;
+import org.activiti.engine.impl.context.Context;
 import org.activiti.engine.impl.interceptor.Command;
-import org.activiti.engine.impl.persistence.entity.HistoricProcessInstanceEntity;
-import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity;
+import org.activiti.engine.impl.interceptor.CommandContext;
+import org.activiti.engine.impl.persistence.entity.*;
 import org.activiti.engine.impl.pvm.ReadOnlyProcessDefinition;
 import org.activiti.engine.impl.pvm.process.ActivityImpl;
 import org.activiti.engine.repository.ProcessDefinition;
@@ -476,10 +477,12 @@ public class ActivitiController {
                     ProcessDefinition p01 = engine.getRepositoryService().createProcessDefinitionQuery().processDefinitionId(thisFlowId).singleResult();
                     map.put("pname",p01.getName()); // 流程名字
                     map.put("piid",task.getProcessInstanceId()); // 部署信息的ID
-                    map.put("name",task.getAssignee()); // 任务执行人
+                    map.put("assignee",task.getAssignee()); // 任务执行人
+                    map.put("nodeid",task.getTaskDefinitionKey()); // 当前节点ID
+                    map.put("nodename",task.getName()); // 节点名称
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
                     map.put("createtime",sdf.format(task.getCreateTime()));//任务创建时间
-                    map.put("pid",task.getProcessDefinitionId());//流程ID
+                    map.put("pid",task.getProcessDefinitionId());//流程ID 长的 是 流程启动的id
                     temList.add(map);
                 }
             }
@@ -511,6 +514,9 @@ public class ActivitiController {
         FormService formService= engine.getFormService();
         String taskID = request.getParameter("id");//任务ID
         Task task = taskService.createTaskQuery().taskId(taskID).singleResult();//获取任务实体
+        if(task==null){
+            return;
+        }
         //获取流程实体
         String flowID = task.getProcessDefinitionId();//流程ID
         ProcessDefinition processDefinition = engine.getRepositoryService().createProcessDefinitionQuery()
@@ -633,37 +639,114 @@ public class ActivitiController {
         String taskId = request.getParameter("id");//任务ID
         String flowId = request.getParameter("pid");//流程ID
         String activityId = request.getParameter("backId");//退回的目标节点ID
+        String nodeid = request.getParameter("nodeid");//当前节点ID
+        //这里假设往前退回1
         String state = "";
+        PrintWriter out = null;
+        JSONObject json = new JSONObject();
+        try {
+            out =  response.getWriter();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         HistoricTaskInstance historicTaskInstance = engine.getHistoryService().createHistoricTaskInstanceQuery()
                 .taskId(taskId).finished().singleResult();
         if(historicTaskInstance !=null){
             state = "任务已结束，不能进行回退操作！";
+            json.put("state",state);
+            out.print(json.toString());
+            out.close();
+            return;
         }
         if(activityId == null || "".equals(activityId)){
             state = "回退目标节点不能为空！";
+            json.put("state",state);
+            out.print(json.toString());
+            out.close();
+            return;
         }
         long count = engine.getTaskService().createTaskQuery().taskId(taskId).count();
         if(count == 0){
             state = "要驳回的任务已不存在！";
+            json.put("state",state);
+            out.print(json.toString());
+            out.close();
+            return;
         }
 
         Task currentTask = engine.getTaskService().createTaskQuery().taskId(taskId).singleResult();
         ProcessDefinitionEntity definitionEntity = (ProcessDefinitionEntity) ((RepositoryServiceImpl) engine.getRepositoryService()).getProcessDefinition(currentTask.getProcessDefinitionId());
-        String instanceId = currentTask.getProcessInstanceId();
+        //String instanceId = currentTask.getProcessInstanceId();
         ActivityImpl activityImpl = definitionEntity.findActivity(activityId);
         if(activityImpl == null){
             state = "要驳回的节点不存在！";
+            json.put("state",state);
+            out.print(json.toString());
+            out.close();
+            return;
         }
 
 
-        JSONObject json = new JSONObject();
+        TaskService taskService = engine.getTaskService() ;
+        Task task = taskService.createTaskQuery().taskId(Arrays.asList(taskId.split(",")).get(0)).singleResult();
+        String executionId = task.getExecutionId();
+        String lcdyId = task.getProcessDefinitionId();
+        //String processTaskId = task.getId();//当前节点id
+        String processTaskId = task.getTaskDefinitionKey();
+        RepositoryService repositoryService = engine.getRepositoryService();
+        ReadOnlyProcessDefinition processDefinitionEntity = (ReadOnlyProcessDefinition) repositoryService.getProcessDefinition(lcdyId);
+        ActivityImpl destinationActivity = (ActivityImpl) processDefinitionEntity.findActivity(activityId);//目标节点
+        ActivityImpl currentActivity = (ActivityImpl)processDefinitionEntity.findActivity(processTaskId);//当前节点
+        engine.getManagementService().executeCommand( new JumpTaskCmd(executionId,destinationActivity,currentActivity) );
         json.put("state", "已经撤回！");
-        try {
-            response.getWriter().print(json.toString());
-        } catch (IOException e) {
-            e.printStackTrace();
+        out.print(json.toString());
+        out.close();
+    }
+
+
+    public class JumpTaskCmd implements Command<Void>{
+        private String executionId;
+        private ActivityImpl desActivity;
+        private Map<String, Object> paramvar;
+        private ActivityImpl currentActivity;
+
+        public Void execute(CommandContext commandContext) {
+            ExecutionEntityManager executionEntityManager = Context.getCommandContext().getExecutionEntityManager();
+            // 获取当前流程的executionId，因为在并发的情况下executionId是唯一的。
+            ExecutionEntity executionEntity = executionEntityManager.findExecutionById(executionId);
+            executionEntity.setVariables(paramvar);
+            executionEntity.setEventSource(this.currentActivity);
+            executionEntity.setActivity(this.currentActivity);
+            // 根据executionId 获取Task
+            Iterator<TaskEntity> localIterator = Context.getCommandContext().getTaskEntityManager()
+                    .findTasksByExecutionId(this.executionId).iterator();
+
+            while (localIterator.hasNext()) {
+                TaskEntity taskEntity = (TaskEntity) localIterator.next();
+                // 触发任务监听
+                //taskEntity.fireEvent("complete");
+                // 删除任务的原因
+                Context.getCommandContext().getTaskEntityManager().deleteTask(taskEntity, "completed", false);
+            }
+            executionEntity.executeActivity(this.desActivity);
+            return null;
+        }
+
+        /**
+         * 构造参数 可以根据自己的业务需要添加更多的字段
+         * @param executionId
+         * @param desActivity
+         * @param currentActivity
+         */
+        public JumpTaskCmd(String executionId, ActivityImpl desActivity,
+                           ActivityImpl currentActivity) {
+            this.executionId = executionId;
+            this.desActivity = desActivity;
+            this.currentActivity = currentActivity;
         }
     }
+
+
 
     /**
      * 已经 归档 的 任务

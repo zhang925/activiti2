@@ -33,18 +33,22 @@
                             var num = dd.num;//每个流程的要处理的任务数量
                             var result = dd.result;
                             result.forEach(function (value) {
+                                //console.log(value)
                                 var id = value.id;
-                                var pid = value.piid;
-                                var name = value.name;
+                                var piid = value.piid;//流程ID
+                                var pid = value.pid;
+                                var nodename = value.nodename;//任务名称
+                                var assignee = value.assignee;//待处理人
                                 var createtime = value.createtime;
+                                var nodeid = value.nodeid;
                                 appendHtml += " <tr><td>"+id+"</td>";
-                                appendHtml += " <td>"+pid+"</td>";
-                                appendHtml += " <td>"+name+"</td>";
+                                appendHtml += " <td>"+nodename+"</td>";
+                                appendHtml += " <td>"+assignee+"</td>";
                                 appendHtml += " <td>"+createtime+"</td>";
                                 appendHtml += " <td>";
                                 appendHtml += " <button type=\"button\" onclick=\"generForm('"+id+"')\" class=\"btn btn-info\">处理任务</button>";
-                                appendHtml += " <button type=\"button\" onclick=\"tuxing('"+pid+"','"+name+"')\" class=\"btn btn-warning\">流程图</button>";
-                                appendHtml += " <button type=\"button\" onclick=\"dh('"+id+"','"+pid+"')\" class=\"btn btn-danger\">打回</button>";
+                                appendHtml += " <button type=\"button\" onclick=\"tuxing('"+piid+"','"+assignee+"')\" class=\"btn btn-warning\">流程图</button>";
+                                appendHtml += " <button type=\"button\" onclick=\"dh('"+id+"','"+nodeid+"')\" class=\"btn btn-danger\">打回</button>";
                                 appendHtml += " </td></tr>";
                             });
 
@@ -93,19 +97,23 @@
         }
 
 
-        function dh(id,pid) {// 打回
-           $.ajax({
-                url:"activitiController/revokeTask",
-                dataType:"json",
-                type:"POST",
-                data:{"id":id,"pid":pid},
-                async:false,
-                success:function (data) {
-                    loadallreadyStarttaskList();
-                    parent.shownum(); //调用 父级方法 刷新 任务数量
-                    alert(data.state);
-                }
-            })
+        function dh(id,nodeid,backId) {// 打回 需要传递两个参数，taskid和要退回的流程ID
+             backId = prompt("请输出退回节点ID，当前的："+nodeid,"startevent1");
+            if(backId){
+                $.ajax({
+                    url:"activitiController/revokeTask",
+                    dataType:"json",
+                    type:"POST",
+                    data:{"id":id,"nodeid":nodeid,"backId":backId},
+                    async:false,
+                    success:function (data) {
+                        //loadallreadyStarttaskList();
+                        //parent.shownum(); //调用 父级方法 刷新 任务数量
+                        alert(data.state);
+                    }
+                })
+            }
+
         }
 
         function ZZYserialize(formid) {
